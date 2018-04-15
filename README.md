@@ -29,7 +29,7 @@ On click at this link the contents of the `/ajax` page will be inserted into the
 
 ## Options
 
-### `action: 'fill'`
+### `(string) action: 'fill'`
 
 Actions to be applied to the target element:
 
@@ -40,35 +40,35 @@ Actions to be applied to the target element:
 - `after`: insert resource after the target (see [jQuery().after()](http://api.jquery.com/after/)),
 - `before`: insert resource before the target (see [jQuery().before()](http://api.jquery.com/before/)).
 
-### `ajaxOptions: {}`
+### `(object) ajaxOptions: {dataType: 'html'}`
 
 See [jQuery.ajax()](http://api.jquery.com/jquery.ajax/).
 
 Note: `ajaxOptions.url` will override the `url` option.
 
-### `autoload: false`
+### `(bool) autoload: false`
 
 If `true`, request is performed immediately after initialization.
 
-### `history: false`
+### `(bool) history: false`
 
 If `true`, requested url is pushed to the browser history.
 
-### `interceptRedirect: true`
+### `(bool) interceptRedirect: true`
 
 If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Url` header in case of a redirect.
 
-### `on`
+### `(string|function($element)) on`
 
 Events that will trigger request (see [jQuery().on()](http://api.jquery.com/on/)).
 
 Defaults to `submit` for forms and `click` for links and buttons.
 
-### `preventDefault: true`
+### `(bool) preventDefault: true`
 
 If `true`, the default browser action is prevented.
 
-### `redirectMode: 'follow'`
+### `(string) redirectMode: 'follow'`
 
 Strategies for handling the response `Frujax-Redirect-Url` header:
 
@@ -76,7 +76,7 @@ Strategies for handling the response `Frujax-Redirect-Url` header:
 - `assign`: load redirect url in the current window (see [Location.assign()](https://developer.mozilla.org/en-US/docs/Web/API/Location/assign)),
 - `replace`: replace the current resource with the one at the redirect url (see [Location.replace()](https://developer.mozilla.org/en-US/docs/Web/API/Location/replace)).
 
-### `serialMode: 'async'`
+### `(string) serialMode: 'async'`
 
 Strategies for handling sequential calls (when specified events trigger before the last request terminates):
 
@@ -84,11 +84,11 @@ Strategies for handling sequential calls (when specified events trigger before t
 - `force`: abort the pending request and make a new one,
 - `lock`: ignore new calls until the last one terminates.
 
-### `target: null|<selector>`
+### `(null|<selector>) target: null`
 
 Element to apply action to. If `null`, the frujax element itself is a target.
 
-### `url: `
+### `(null|string|function($element)) url`
 
 Resource url (a quick alias for `ajaxOptions.url`).
 
