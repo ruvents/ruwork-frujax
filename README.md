@@ -31,9 +31,7 @@ On click at this link the contents of the `/ajax` page will be inserted into the
 
 ### action
 
-Type: `string`.
-
-Default: `'fill'`.
+Type: `string`. Default: `'fill'`.
 
 Actions to be applied to the target element:
 
@@ -46,57 +44,43 @@ Actions to be applied to the target element:
 
 ### ajaxOptions
 
-Type: `object`.
-
-Default: `{dataType: 'html'}`.
+Type: `object`. Default: `{dataType: 'html'}`.
 
 See [jQuery.ajax()](http://api.jquery.com/jquery.ajax/). Note: `ajaxOptions.url` overrides `url`.
 
 ### autoload
 
-Type: `bool`.
-
-Default: `false`.
+Type: `bool`. Default: `false`.
 
 If `true`, request is performed immediately after initialization.
 
 ### history
 
-Type: `bool`.
-
-Default: `false`.
+Type: `bool`. Default: `false`.
 
 If `true`, requested url is pushed to the browser history.
 
 ### interceptRedirect
 
-Type: `bool`.
-
-Default: `true`.
+Type: `bool`. Default: `true`.
 
 If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Url` header in case of a redirect.
 
 ### on
 
-Type: `string`.
-
-Default: `'submit'` for forms, `'click'` for links and buttons.
+Type: `string`. Default: `'submit'` for forms, `'click'` for links and buttons.
 
 Events that will trigger request (see [jQuery().on()](http://api.jquery.com/on/)).
 
 ### preventDefault
 
-Type: `bool`.
-
-Default: `true`.
+Type: `bool`. Default: `true`.
 
 If `true`, the default browser action is prevented.
 
 ### redirectMode
 
-Type: `string`.
-
-Default: `'follow'`.
+Type: `string`. Default: `'follow'`.
 
 Strategies for handling the response `Frujax-Redirect-Url` header:
 
@@ -106,9 +90,7 @@ Strategies for handling the response `Frujax-Redirect-Url` header:
 
 ### serialMode
 
-Type: `string`.
-
-Default: `'async'`.
+Type: `string`. Default: `'async'`.
 
 Strategies for handling sequential calls (when specified events trigger before the last request terminates):
 
@@ -118,17 +100,13 @@ Strategies for handling sequential calls (when specified events trigger before t
 
 ### target
 
-Type: `null|<selector>`.
-
-Default: `null`.
+Type: `null|<selector>`. Default: `null`.
 
 Element to apply action to. If `null`, the frujax element itself is a target.
 
 ### url
 
-Type: `null|string`.
-
-Default: `href` value for `<a>` tags, `action` value for forms.
+Type: `null|string`. Default: `href` value for `<a>` tags, `action` value for forms.
 
 Resource url (a quick alias for `ajaxOptions.url`).
 
