@@ -200,7 +200,7 @@ $frujaxElement.on('always.frujax', function(event, context) {
 Fires if AJAX request succeeds.
 
 ```js
-$frujaxElement.on('always.frujax', function(event, context) {
+$frujaxElement.on('success.frujax', function(event, context) {
 });
 ```
 
