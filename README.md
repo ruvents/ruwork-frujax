@@ -134,7 +134,7 @@ Resource url (a quick alias for `ajaxOptions.url`).
 
 ## Global defaults
 
-Each option might be a callback with `$element` argument to have a dynamic default value.
+To set a dynamic default value, use a callback with `$element` argument.
 
 ```js
 // getter
