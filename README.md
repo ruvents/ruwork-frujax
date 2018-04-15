@@ -25,7 +25,7 @@ Or you can use `data-frujax` attribute to quickly setup frujax on any element.
 <a href="/ajax" data-frujax='{"target": "#container"}'>Link</a>
 ```
 
-On click at this link the contents of the `/ajax` page will be inserted into the `#container` element.
+Clicking the link will load the contents of the `/ajax` page into the `#container` element.
 
 ## Options
 
@@ -35,12 +35,12 @@ Type: `string`. Default: `fill`.
 
 Actions to be applied to the target element:
 
-- `fill`: replace target's contents with resource (see [jQuery().html()](http://api.jquery.com/html/)),
-- `replace`: replace target with resource (see [jQuery().replaceWith()](http://api.jquery.com/replaceWith/)),
-- `prepend`: insert resource to the beginning of the target (see [jQuery().prepend()](http://api.jquery.com/prepend/)),
-- `append`: insert resource to the end of the target (see [jQuery().append()](http://api.jquery.com/append/)),
-- `after`: insert resource after the target (see [jQuery().after()](http://api.jquery.com/after/)),
-- `before`: insert resource before the target (see [jQuery().before()](http://api.jquery.com/before/)).
+- `fill`: replace target's contents with resource (see [.html()](http://api.jquery.com/html/)),
+- `replace`: replace target with resource (see [.replaceWith()](http://api.jquery.com/replaceWith/)),
+- `prepend`: insert resource to the beginning of the target (see [.prepend()](http://api.jquery.com/prepend/)),
+- `append`: insert resource to the end of the target (see [.append()](http://api.jquery.com/append/)),
+- `after`: insert resource after the target (see [.after()](http://api.jquery.com/after/)),
+- `before`: insert resource before the target (see [.before()](http://api.jquery.com/before/)).
 
 ### ajaxOptions
 
@@ -70,13 +70,13 @@ If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects 
 
 Type: `string`. Default: `submit` for forms, `click` for links and buttons.
 
-Events that will trigger request (see [jQuery().on()](http://api.jquery.com/on/)).
+Events that will trigger request (see the first argument of [.on()](http://api.jquery.com/on/)).
 
 ### preventDefault
 
 Type: `bool`. Default: `true`.
 
-If `true`, the default browser action is prevented.
+If `true`, the default browser action will not be triggered (see [event.preventDefault()](https://api.jquery.com/event.preventdefault/)).
 
 ### redirectMode
 
@@ -106,9 +106,9 @@ Element to apply action to. If `null`, the frujax element itself is a target.
 
 ### url
 
-Type: `null|string`. Default: `href` value for `<a>` tags, `action` value for forms.
+Type: `null|string`. Default: `href` for `<a>` tags, `action` for forms (handled internally by the jQuery Form Plugin).
 
-Resource url (a quick alias for `ajaxOptions.url`).
+Resource url. This option is introduced for simplicity of configuration. It is actually used as a default value for `ajaxOptions.url`.
 
 ## Global defaults
 
@@ -137,6 +137,22 @@ $.frujaxDefaults({
 
 ## Methods
 
+### abort
+
+Abort last AJAX request.
+
+```js
+$frujaxElement.frujax('abort');
+```
+
+### destroy
+
+Aborts pending requests, removes all data and unbinds all internal events.
+
+```js
+$frujaxElement.frujax('destroy');
+```
+
 ### options
 
 Getter and setter for element's options.
@@ -153,34 +169,18 @@ $frujaxElement.frujax('options', {
 
 Note: `refresh` method must be called if `on` was changed.
 
-### destroy
-
-Aborts pending requests, removes all data and unbinds all internal events.
-
-```js
-$frujaxElement.frujax('destroy');
-```
-
 ### refresh
 
 Aborts pending requests, rebinds internal events.
 
 ### request
 
-Performs an AJAX request with specified AJAX options.
+Performs an AJAX request with specified AJAX options (will be merged into the element's `ajaxOptions`).
 
 ```js
 $frujaxElement.frujax('request', {
     cache: false
 });
-```
-
-### abort
-
-Abort last AJAX request.
-
-```js
-$frujaxElement.frujax('abort');
 ```
 
 ## Events
