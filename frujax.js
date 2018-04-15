@@ -35,20 +35,24 @@
 
     $.extend({
         frujaxDefaults: function (options) {
-            return $.extend(true, defaults, options);
+            if (undefined !== options) {
+                $.extend(true, defaults, options);
+            }
+
+            return defaults;
         }
     });
 
     function Frujax(element, options) {
-        this.$element = $(element);
-        this.opts = $.extend(true, {}, defaults, options);
-        this.jqXHR = null;
+        this._$element = $(element);
+        this._options = $.extend(true, {}, defaults, options);
+        this._jqXHRs = [];
 
         var base = this;
 
-        $.each(this.opts, function (key, value) {
+        $.each(this._options, function (key, value) {
             if ('function' === typeof value) {
-                base.opts[key] = value(base.$element);
+                base._options[key] = value(base._$element);
             }
         });
 
@@ -56,44 +60,59 @@
     }
 
     $.extend(Frujax.prototype, {
-        options: function (options) {
-            return $.extend(true, this.opts, options);
-        },
-        init: function () {
-            this._bind();
-
-            if (this.opts.autoload) {
-                this.request();
+        abort: function () {
+            for (var i = 0; i < this._jqXHRs.length; i++) {
+                if (this._jqXHRs[i].readyState !== 4) {
+                    this._jqXHRs[i].abort();
+                }
             }
         },
         destroy: function () {
             this.abort();
             this._unbind();
         },
+        init: function () {
+            this._bind();
+
+            if (this._options.autoload) {
+                this.request();
+            }
+        },
+        jqXHRs: function () {
+            return this._jqXHRs;
+        },
+        options: function (options) {
+            if (undefined !== options) {
+                $.extend(true, this._options, options);
+            }
+
+            return this._options;
+        },
         refresh: function () {
-            this.destroy();
+            this.abort();
+            this._unbind();
             this.init();
         },
         request: function (options) {
             var base = this,
-                serialMode = base.opts.serialMode;
+                serialMode = base._options.serialMode;
 
-            if (null !== base.jqXHR && 'async' !== serialMode && 4 !== base.jqXHR.readyState) {
-                if ('force' === serialMode) {
-                    base.jqXHR.abort();
-                } else if ('lock' === serialMode) {
-                    return;
-                }
+            if ('force' === serialMode) {
+                base.abort();
+            } else if ('lock' === serialMode && base._hasActiveJqXHRs()) {
+                return;
             }
 
-            var $element = base.$element,
+            var $element = base._$element,
                 ajaxOptions = base._resolveAjaxOptions(options);
 
             $element.trigger('before.frujax', ajaxOptions);
 
-            base._initJqXHR(ajaxOptions);
+            var jqXHR = base._createJqXHR(ajaxOptions);
 
-            base.jqXHR
+            base._jqXHRs.push(jqXHR);
+
+            jqXHR
                 .done(function (data, textStatus, jqXHR) {
                     var context = base._createContext(ajaxOptions, jqXHR, textStatus, null, data);
 
@@ -110,7 +129,7 @@
 
                         $element.trigger('acted.frujax', context);
 
-                        if (base.opts.history) {
+                        if (base._options.history) {
                             base._pushHistoryState(context.title, context.url);
                         }
                     }
@@ -122,87 +141,8 @@
                     $element.trigger('fail.frujax', context);
                 });
         },
-        abort: function () {
-            if (null !== this.jqXHR && 4 !== this.jqXHR.readyState) {
-                this.jqXHR.abort();
-            }
-        },
-        _bind: function () {
-            if (null === this.opts.on) {
-                return;
-            }
-
-            var base = this,
-                events = (base.opts.on + ' ').replace(/(\w) /g, '$1.frujax.internal ');
-
-            base.$element.on(events, function (event) {
-                if (base.opts.preventDefault) {
-                    event.preventDefault();
-                }
-
-                base.request();
-            });
-        },
-        _unbind: function () {
-            this.$element.off('.frujax.internal');
-        },
-        _resolveAjaxOptions: function (options) {
-            var ajaxOptions = $.extend(
-                true,
-                {url: this.opts.url},
-                this.opts.ajaxOptions,
-                options
-            );
-
-            ajaxOptions.headers = $.extend({}, ajaxOptions.headers, {
-                'Frujax': 1,
-                'Frujax-Intercept-Redirect': this.opts.interceptRedirect ? 1 : 0
-            });
-
-            return ajaxOptions;
-        },
-        _initJqXHR: function (options) {
-            if (this.$element.is('form')) {
-                if ('function' === typeof $.fn.ajaxSubmit) {
-                    this.jqXHR = this.$element.ajaxSubmit(options).data('jqxhr');
-
-                    return;
-                }
-
-                console.warn('jQuery Form Plugin is required to submit forms correctly. https://github.com/jquery-form/form');
-            }
-
-            this.jqXHR = $.ajax(options);
-        },
-        _createContext: function (ajaxOptions, jqXHR, textStatus, errorThrown, data) {
-            return {
-                $content: data ? $(data) : null,
-                $target: null === this.opts.target ? this.$element : $(this.opts.target),
-                ajaxOptions: ajaxOptions,
-                errorThrown: errorThrown,
-                jqXHR: jqXHR,
-                redirectUrl: jqXHR.getResponseHeader('Frujax-Redirect-Url') || null,
-                textStatus: textStatus,
-                title: jqXHR.getResponseHeader('Frujax-Title') || '',
-                url: jqXHR.getResponseHeader('Frujax-Url') || ajaxOptions.url || null,
-                getHeader: function (name) {
-                    return jqXHR.getResponseHeader(name);
-                },
-            };
-        },
-        _processRedirect: function (redirectUrl, ajaxOptions) {
-            var redirectMode = this.opts.redirectMode;
-
-            if ('follow' === redirectMode) {
-                this.request($.extend({}, ajaxOptions, {url: redirectUrl}));
-            } else if ('assign' === redirectMode) {
-                document.location.assign(redirectUrl);
-            } else if ('replace' === redirectMode) {
-                document.location.replace(redirectUrl);
-            }
-        },
         _applyAction: function ($target, $content) {
-            var action = this.opts.action;
+            var action = this._options.action;
 
             if ('function' === typeof action) {
                 action($target, $content);
@@ -220,8 +160,89 @@
                 $target.before($content);
             }
         },
+        _bind: function () {
+            if (null === this._options.on) {
+                return;
+            }
+
+            var base = this,
+                events = (base._options.on + ' ').replace(/(\w) /g, '$1.frujax.internal ');
+
+            base._$element.on(events, function (event) {
+                if (base._options.preventDefault) {
+                    event.preventDefault();
+                }
+
+                base.request();
+            });
+        },
+        _createContext: function (ajaxOptions, jqXHR, textStatus, errorThrown, data) {
+            return {
+                $content: data ? $(data) : null,
+                $target: null === this._options.target ? this._$element : $(this._options.target),
+                ajaxOptions: ajaxOptions,
+                errorThrown: errorThrown,
+                jqXHR: jqXHR,
+                redirectUrl: jqXHR.getResponseHeader('Frujax-Redirect-Url') || null,
+                textStatus: textStatus,
+                title: jqXHR.getResponseHeader('Frujax-Title') || '',
+                url: jqXHR.getResponseHeader('Frujax-Url') || ajaxOptions.url || null,
+                getHeader: function (name) {
+                    return jqXHR.getResponseHeader(name);
+                },
+            };
+        },
+        _createJqXHR: function (options) {
+            if (this._$element.is('form')) {
+                if ('function' === typeof $.fn.ajaxSubmit) {
+                    return this._$element.ajaxSubmit(options).data('jqxhr');
+                }
+
+                console.warn('jQuery Form Plugin is required to submit forms correctly. https://github.com/jquery-form/form');
+            }
+
+            return $.ajax(options);
+        },
+        _hasActiveJqXHRs: function () {
+            for (var i = 0; i < this._jqXHRs.length; i++) {
+                if (4 !== this._jqXHRs[i].readyState) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+        _processRedirect: function (redirectUrl, ajaxOptions) {
+            var redirectMode = this._options.redirectMode;
+
+            if ('follow' === redirectMode) {
+                this.request($.extend({}, ajaxOptions, {url: redirectUrl}));
+            } else if ('assign' === redirectMode) {
+                document.location.assign(redirectUrl);
+            } else if ('replace' === redirectMode) {
+                document.location.replace(redirectUrl);
+            }
+        },
         _pushHistoryState: function (title, url) {
             window.history.pushState(null, title, url);
+        },
+        _resolveAjaxOptions: function (options) {
+            var ajaxOptions = $.extend(
+                true,
+                {url: this._options.url},
+                this._options.ajaxOptions,
+                options
+            );
+
+            ajaxOptions.headers = $.extend({}, ajaxOptions.headers, {
+                'Frujax': 1,
+                'Frujax-Intercept-Redirect': this._options.interceptRedirect ? 1 : 0
+            });
+
+            return ajaxOptions;
+        },
+        _unbind: function () {
+            this._$element.off('.frujax.internal');
         },
     });
 
