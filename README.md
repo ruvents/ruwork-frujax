@@ -29,7 +29,7 @@ On click at this link the contents of the `/ajax` page will be inserted into the
 
 ## Options
 
-### `action: 'fill|replace|prepend|append|after|before'`
+### `action: 'fill'`
 
 Actions to be applied to the target element:
 
@@ -68,7 +68,7 @@ Defaults to `submit` for forms and `click` for links and buttons.
 
 If `true`, the default browser action is prevented.
 
-### `redirectMode: 'follow|assign|replace'`
+### `redirectMode: 'follow'`
 
 Strategies for handling the response `Frujax-Redirect-Url` header:
 
@@ -76,7 +76,7 @@ Strategies for handling the response `Frujax-Redirect-Url` header:
 - `assign`: load redirect url in the current window (see [Location.assign()](https://developer.mozilla.org/en-US/docs/Web/API/Location/assign)),
 - `replace`: replace the current resource with the one at the redirect url (see [Location.replace()](https://developer.mozilla.org/en-US/docs/Web/API/Location/replace)).
 
-### `serialMode: 'async|force|lock'`
+### `serialMode: 'async'`
 
 Strategies for handling sequential calls (when specified events trigger before the last request terminates):
 
