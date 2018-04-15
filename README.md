@@ -80,7 +80,7 @@ If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects 
 
 Type: `string|function($element)`.
 
-Default: `submit` for forms, `click` for links and buttons.
+Default: `'submit'` for forms, `'click'` for links and buttons.
 
 Events that will trigger request (see [jQuery().on()](http://api.jquery.com/on/)).
 
@@ -128,7 +128,7 @@ Element to apply action to. If `null`, the frujax element itself is a target.
 
 Type: `null|string|function($element)`.
 
-Default: `href` for `<a>` tags, `action` for forms.
+Default: `href` value for `<a>` tags, `action` value for forms.
 
 Resource url (a quick alias for `ajaxOptions.url`).
 
