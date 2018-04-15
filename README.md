@@ -29,7 +29,11 @@ On click at this link the contents of the `/ajax` page will be inserted into the
 
 ## Options
 
-### `(string) action: 'fill'`
+### action
+
+Type: `string`.
+
+Default: `'fill'`.
 
 Actions to be applied to the target element:
 
@@ -40,35 +44,59 @@ Actions to be applied to the target element:
 - `after`: insert resource after the target (see [jQuery().after()](http://api.jquery.com/after/)),
 - `before`: insert resource before the target (see [jQuery().before()](http://api.jquery.com/before/)).
 
-### `(object) ajaxOptions: {dataType: 'html'}`
+### ajaxOptions
 
-See [jQuery.ajax()](http://api.jquery.com/jquery.ajax/).
+Type: `object`.
 
-Note: `ajaxOptions.url` will override the `url` option.
+Default: `{dataType: 'html'}`.
 
-### `(bool) autoload: false`
+See [jQuery.ajax()](http://api.jquery.com/jquery.ajax/). Note: `ajaxOptions.url` overrides `url`.
+
+### autoload
+
+Type: `bool`.
+
+Default: `false`.
 
 If `true`, request is performed immediately after initialization.
 
-### `(bool) history: false`
+### history
+
+Type: `bool`.
+
+Default: `false`.
 
 If `true`, requested url is pushed to the browser history.
 
-### `(bool) interceptRedirect: true`
+### interceptRedirect
+
+Type: `bool`.
+
+Default: `true`.
 
 If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Url` header in case of a redirect.
 
-### `(string|function($element)) on`
+### on
+
+Type: `string|function($element)`.
+
+Default: `submit` for forms, `click` for links and buttons.
 
 Events that will trigger request (see [jQuery().on()](http://api.jquery.com/on/)).
 
-Defaults to `submit` for forms and `click` for links and buttons.
+### preventDefault
 
-### `(bool) preventDefault: true`
+Type: `bool`.
+
+Default: `true`.
 
 If `true`, the default browser action is prevented.
 
-### `(string) redirectMode: 'follow'`
+### redirectMode
+
+Type: `string`.
+
+Default: `'follow'`.
 
 Strategies for handling the response `Frujax-Redirect-Url` header:
 
@@ -76,7 +104,11 @@ Strategies for handling the response `Frujax-Redirect-Url` header:
 - `assign`: load redirect url in the current window (see [Location.assign()](https://developer.mozilla.org/en-US/docs/Web/API/Location/assign)),
 - `replace`: replace the current resource with the one at the redirect url (see [Location.replace()](https://developer.mozilla.org/en-US/docs/Web/API/Location/replace)).
 
-### `(string) serialMode: 'async'`
+### serialMode
+
+Type: `string`.
+
+Default: `'async'`.
 
 Strategies for handling sequential calls (when specified events trigger before the last request terminates):
 
@@ -84,15 +116,21 @@ Strategies for handling sequential calls (when specified events trigger before t
 - `force`: abort the pending request and make a new one,
 - `lock`: ignore new calls until the last one terminates.
 
-### `(null|<selector>) target: null`
+### target
+
+Type: `null|<selector>`.
+
+Default: `null`.
 
 Element to apply action to. If `null`, the frujax element itself is a target.
 
-### `(null|string|function($element)) url`
+### url
+
+Type: `null|string|function($element)`.
+
+Default: `href` for `<a>` tags, `action` for forms.
 
 Resource url (a quick alias for `ajaxOptions.url`).
-
-Defaults to `href` attribute value for `<a>` elements.
 
 ## Global defaults
 
