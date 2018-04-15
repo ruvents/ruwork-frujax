@@ -216,7 +216,7 @@ $frujaxElement.on('always.frujax', function(event, context) {
     context.title;
     // Frujax-Url header or requested url
     context.url;
-    context.getHeader(name);
+    var value = context.getHeader('X-Value');
 });
 ```
 
