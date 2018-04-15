@@ -31,7 +31,7 @@ On click at this link the contents of the `/ajax` page will be inserted into the
 
 ### action
 
-Type: `string`. Default: `'fill'`.
+Type: `string`. Default: `fill`.
 
 Actions to be applied to the target element:
 
@@ -68,7 +68,7 @@ If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects 
 
 ### on
 
-Type: `string`. Default: `'submit'` for forms, `'click'` for links and buttons.
+Type: `string`. Default: `submit` for forms, `click` for links and buttons.
 
 Events that will trigger request (see [jQuery().on()](http://api.jquery.com/on/)).
 
@@ -80,7 +80,7 @@ If `true`, the default browser action is prevented.
 
 ### redirectMode
 
-Type: `string`. Default: `'follow'`.
+Type: `string`. Default: `follow`.
 
 Strategies for handling the response `Frujax-Redirect-Url` header:
 
@@ -90,7 +90,7 @@ Strategies for handling the response `Frujax-Redirect-Url` header:
 
 ### serialMode
 
-Type: `string`. Default: `'async'`.
+Type: `string`. Default: `async`.
 
 Strategies for handling sequential calls (when specified events trigger before the last request terminates):
 
