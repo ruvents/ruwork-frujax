@@ -44,15 +44,15 @@
         this.opts = $.extend(true, {}, defaults, options);
         this.jqXHR = null;
 
-        if ('function' === typeof this.opts.on) {
-            this.opts.on = this.opts.on(this.$element);
-        }
+        var base = this;
 
-        if ('function' === typeof this.opts.url) {
-            this.opts.url = this.opts.url(this.$element);
-        }
+        $.each(this.opts, function (key, value) {
+            if ('function' === typeof value) {
+                base.opts[key] = value(base.$element);
+            }
+        });
 
-        this.init();
+        base.init();
     }
 
     $.extend(Frujax.prototype, {

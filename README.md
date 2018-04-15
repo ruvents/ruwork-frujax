@@ -78,7 +78,7 @@ If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects 
 
 ### on
 
-Type: `string|function($element)`.
+Type: `string`.
 
 Default: `'submit'` for forms, `'click'` for links and buttons.
 
@@ -126,13 +126,15 @@ Element to apply action to. If `null`, the frujax element itself is a target.
 
 ### url
 
-Type: `null|string|function($element)`.
+Type: `null|string`.
 
 Default: `href` value for `<a>` tags, `action` value for forms.
 
 Resource url (a quick alias for `ajaxOptions.url`).
 
 ## Global defaults
+
+Each option might be a callback with `$element` argument to have a dynamic default value.
 
 ```js
 // getter
@@ -144,7 +146,14 @@ $.frujaxDefaults({
     ajaxOptions: {
         timeout: 1000,
         method: 'post'
-    }
+    },
+    url: function ($element) {
+        if ($element.is('a')) {
+            return $element.prop('href');
+        }
+
+        return null;
+    },
 });
 ```
 
