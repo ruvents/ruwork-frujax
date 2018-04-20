@@ -62,7 +62,7 @@
     $.extend(Frujax.prototype, {
         abort: function () {
             for (var i = 0; i < this._jqXHRs.length; i++) {
-                if (this._jqXHRs[i].readyState !== 4) {
+                if (null !== this._jqXHRs[i]) {
                     this._jqXHRs[i].abort();
                 }
             }
@@ -77,9 +77,6 @@
             if (this._options.autoload) {
                 this.request();
             }
-        },
-        jqXHRs: function () {
-            return this._jqXHRs;
         },
         options: function (options) {
             if (undefined !== options) {
@@ -104,15 +101,12 @@
             }
 
             var $element = base._$element,
-                ajaxOptions = base._resolveAjaxOptions(options);
+                ajaxOptions = base._resolveAjaxOptions(options),
+                index = base._jqXHRs.length;
 
             $element.trigger('before.frujax', ajaxOptions);
 
-            var jqXHR = base._createJqXHR(ajaxOptions);
-
-            base._jqXHRs.push(jqXHR);
-
-            jqXHR
+            base._jqXHRs[index] = base._createJqXHR(ajaxOptions)
                 .done(function (data, textStatus, jqXHR) {
                     var context = base._createContext(ajaxOptions, jqXHR, textStatus, null, data);
 
@@ -139,6 +133,9 @@
 
                     $element.trigger('always.frujax', context);
                     $element.trigger('fail.frujax', context);
+                })
+                .always(function () {
+                    base._jqXHRs[index] = null;
                 });
         },
         _applyAction: function ($target, $content) {
@@ -205,7 +202,7 @@
         },
         _hasActiveJqXHRs: function () {
             for (var i = 0; i < this._jqXHRs.length; i++) {
-                if (4 !== this._jqXHRs[i].readyState) {
+                if (null !== this._jqXHRs[i]) {
                     return true;
                 }
             }

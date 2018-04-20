@@ -153,18 +153,6 @@ Aborts pending requests, removes all data and unbinds all internal events.
 $frujaxElement.frujax('destroy');
 ```
 
-### jqXHRs
-
-Returns all jqXHR objects.
-
-```js
-var jqXHRs = $frujaxElement.frujax('jqXHR');
-
-for (var i = 0; i < jqXHRs.length; i++) {
-    console.log(jqXHRs[i].readyState);
-}
-```
-
 ### options
 
 Getter and setter for element's options.
