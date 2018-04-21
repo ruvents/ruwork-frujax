@@ -108,6 +108,8 @@
 
             base._jqXHRs[index] = base._createJqXHR(ajaxOptions)
                 .done(function (data, textStatus, jqXHR) {
+                    base._jqXHRs[index] = null;
+
                     var context = base._createContext(ajaxOptions, jqXHR, textStatus, null, data);
 
                     $element.trigger('always.frujax', context);
@@ -129,13 +131,12 @@
                     }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
+                    base._jqXHRs[index] = null;
+
                     var context = base._createContext(ajaxOptions, jqXHR, textStatus, errorThrown);
 
                     $element.trigger('always.frujax', context);
                     $element.trigger('fail.frujax', context);
-                })
-                .always(function () {
-                    base._jqXHRs[index] = null;
                 });
         },
         _applyAction: function ($target, $content) {
