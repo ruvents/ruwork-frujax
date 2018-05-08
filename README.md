@@ -106,7 +106,7 @@ Element to apply action to. If `null`, the frujax element itself is a target.
 
 ### url
 
-Type: `null|string`. Default: `href` for `<a>` tags, `action` for forms (handled internally by the jQuery Form Plugin).
+Type: `null|string`. Default: `href` for `<a>` tags, `action` for forms.
 
 Resource url. This option is introduced for simplicity of configuration. It is actually used as a default value for `ajaxOptions.url`.
 

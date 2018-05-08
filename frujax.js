@@ -29,6 +29,10 @@
                 return $element.prop('href');
             }
 
+            if ($element.is('form')) {
+                return $element.prop('action');
+            }
+
             return null;
         },
     };
