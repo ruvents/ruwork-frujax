@@ -246,12 +246,3 @@ Fires if a redirect was detected.
 $frujaxElement.on('redirect.frujax', function(event, context) {
 });
 ```
-
-### acted.frujax
-
-Fires right after the action was applied (only on successful requests obviously).
-
-```js
-$frujaxElement.on('acted.frujax', function(event, context) {
-});
-```

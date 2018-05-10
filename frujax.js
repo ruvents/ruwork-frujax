@@ -127,8 +127,6 @@
 
                         base._applyAction(context.$target, context.$content);
 
-                        $element.trigger('acted.frujax', context);
-
                         if (base._options.history) {
                             base._pushHistoryState(context.title, context.url);
                         }
@@ -289,7 +287,7 @@
         .ready(function () {
             initFrujax(document);
         })
-        .on('acted.frujax', function (event, context) {
+        .on('success.frujax', function (event, context) {
             initFrujax(context.$content);
         });
 })(window, document, jQuery);
