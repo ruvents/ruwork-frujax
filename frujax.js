@@ -8,7 +8,6 @@
         },
         autoload: false,
         history: false,
-        interceptRedirect: true,
         on: function ($element) {
             if ($element.is('form')) {
                 return 'submit';
@@ -215,9 +214,7 @@
         _processRedirect: function (redirectUrl, ajaxOptions) {
             var redirectMode = this._options.redirectMode;
 
-            if ('follow' === redirectMode) {
-                this.request($.extend({}, ajaxOptions, {url: redirectUrl}));
-            } else if ('assign' === redirectMode) {
+            if ('assign' === redirectMode) {
                 document.location.assign(redirectUrl);
             } else if ('replace' === redirectMode) {
                 document.location.replace(redirectUrl);
@@ -236,7 +233,7 @@
 
             ajaxOptions.headers = $.extend({}, ajaxOptions.headers, {
                 'Frujax': 1,
-                'Frujax-Intercept-Redirect': this._options.interceptRedirect ? 1 : 0
+                'Frujax-Intercept-Redirect': 'follow' !== this._options.redirectMode ? 1 : 0
             });
 
             return ajaxOptions;

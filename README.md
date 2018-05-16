@@ -60,12 +60,6 @@ Type: `bool`. Default: `false`.
 
 If `true`, requested url is pushed to the browser history.
 
-### interceptRedirect
-
-Type: `bool`. Default: `true`.
-
-If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Url` header in case of a redirect.
-
 ### on
 
 Type: `string`. Default: `submit` for forms, `click` for links and buttons.
@@ -84,9 +78,11 @@ Type: `string`. Default: `follow`.
 
 Strategies for handling the response `Frujax-Redirect-Url` header:
 
-- `follow`: request redirect url with same options,
+- `follow`: let browser follow redirect as usual,
 - `assign`: load redirect url in the current window (see [Location.assign()](https://developer.mozilla.org/en-US/docs/Web/API/Location/assign)),
 - `replace`: replace the current resource with the one at the redirect url (see [Location.replace()](https://developer.mozilla.org/en-US/docs/Web/API/Location/replace)).
+
+If not `follow`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Url` header in case of a redirect.
 
 ### serialMode
 
