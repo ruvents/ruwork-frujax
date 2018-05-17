@@ -8,6 +8,7 @@
         },
         autoload: false,
         history: false,
+        interceptRedirect: true,
         on: function ($element) {
             if ($element.is('form')) {
                 return 'submit';
@@ -93,7 +94,7 @@
             this._unbind();
             this.init();
         },
-        request: function (options) {
+        request: function (options, ignoreForm) {
             var base = this,
                 serialMode = base._options.serialMode;
 
@@ -109,7 +110,7 @@
 
             $element.trigger('before.frujax', ajaxOptions);
 
-            base._jqXHRs[index] = base._createJqXHR(ajaxOptions)
+            base._jqXHRs[index] = base._createJqXHR(ajaxOptions, ignoreForm)
                 .done(function (data, textStatus, jqXHR) {
                     base._jqXHRs[index] = null;
 
@@ -117,13 +118,15 @@
 
                     $element.trigger('always.frujax', context);
 
-                    if (context.redirectUrl) {
-                        $element.trigger('redirect.frujax', context);
-
-                        base._processRedirect(context.redirectUrl, ajaxOptions);
+                    if (context.redirectLocation) {
+                        if (base._options.interceptRedirect) {
+                            $element.trigger('redirect.frujax', context);
+                            base._processRedirect(context);
+                        } else {
+                            console.info('Ignored Frujax-Redirect-Location response header, because interceptRedirect is set to false.');
+                        }
                     } else {
                         $element.trigger('success.frujax', context);
-
                         base._applyAction(context.$target, context.$content);
 
                         if (base._options.history) {
@@ -176,13 +179,16 @@
             });
         },
         _createContext: function (ajaxOptions, jqXHR, textStatus, errorThrown, data) {
+            var redirectStatusCode = jqXHR.getResponseHeader('Frujax-Redirect-Status-Code');
+
             return {
                 $content: data ? $(data) : null,
                 $target: null === this._options.target ? this._$element : $(this._options.target),
                 ajaxOptions: ajaxOptions,
                 errorThrown: errorThrown,
                 jqXHR: jqXHR,
-                redirectUrl: jqXHR.getResponseHeader('Frujax-Redirect-Url') || null,
+                redirectLocation: jqXHR.getResponseHeader('Frujax-Redirect-Location') || null,
+                redirectStatusCode: redirectStatusCode ? parseInt(redirectStatusCode) : null,
                 textStatus: textStatus,
                 title: jqXHR.getResponseHeader('Frujax-Title') || '',
                 url: jqXHR.getResponseHeader('Frujax-Url') || ajaxOptions.url || null,
@@ -191,8 +197,8 @@
                 },
             };
         },
-        _createJqXHR: function (options) {
-            if (this._$element.is('form')) {
+        _createJqXHR: function (options, ignoreForm) {
+            if (!ignoreForm && this._$element.is('form')) {
                 if ('function' === typeof $.fn.ajaxSubmit) {
                     return this._$element.ajaxSubmit(options).data('jqxhr');
                 }
@@ -211,13 +217,29 @@
 
             return false;
         },
-        _processRedirect: function (redirectUrl, ajaxOptions) {
+        _processRedirect: function (context) {
             var redirectMode = this._options.redirectMode;
 
-            if ('assign' === redirectMode) {
-                document.location.assign(redirectUrl);
+            if ('follow' === redirectMode) {
+                var options = $.extend({}, context.ajaxOptions, {url: context.redirectLocation}),
+                    ignoreForm;
+
+                if (307 === context.redirectStatusCode) {
+                    ignoreForm = false;
+                } else {
+                    ignoreForm = true;
+                    $.extend(options, {
+                        type: 'GET',
+                        headers: {},
+                        data: {},
+                    });
+                }
+
+                this.request(options, ignoreForm);
+            } else if ('assign' === redirectMode) {
+                document.location.assign(context.redirectLocation);
             } else if ('replace' === redirectMode) {
-                document.location.replace(redirectUrl);
+                document.location.replace(context.redirectLocation);
             }
         },
         _pushHistoryState: function (title, url) {
@@ -231,10 +253,11 @@
                 options
             );
 
-            ajaxOptions.headers = $.extend({}, ajaxOptions.headers, {
-                'Frujax': 1,
-                'Frujax-Intercept-Redirect': 'follow' !== this._options.redirectMode ? 1 : 0
-            });
+            ajaxOptions.headers = $.extend({}, ajaxOptions.headers, {'Frujax': 1});
+
+            if (this._options.interceptRedirect) {
+                ajaxOptions.headers['Frujax-Intercept-Redirect'] = 1;
+            }
 
             return ajaxOptions;
         },

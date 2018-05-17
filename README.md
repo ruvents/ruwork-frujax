@@ -60,6 +60,12 @@ Type: `bool`. Default: `false`.
 
 If `true`, requested url is pushed to the browser history.
 
+### interceptRedirect
+
+Type: `bool`. Default: `true`.
+
+If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Location` and `Frujax-Redirect-Status-Code` headers in case of a redirect.
+
 ### on
 
 Type: `string`. Default: `submit` for forms, `click` for links and buttons.
@@ -76,13 +82,11 @@ If `true`, the default browser action will not be triggered (see [event.preventD
 
 Type: `string`. Default: `follow`.
 
-Strategies for handling the response `Frujax-Redirect-Url` header:
+Strategies for handling response with a `Frujax-Redirect-Location` header:
 
-- `follow`: let browser follow redirect as usual,
+- `follow`: request redirect url with same options,
 - `assign`: load redirect url in the current window (see [Location.assign()](https://developer.mozilla.org/en-US/docs/Web/API/Location/assign)),
 - `replace`: replace the current resource with the one at the redirect url (see [Location.replace()](https://developer.mozilla.org/en-US/docs/Web/API/Location/replace)).
-
-If not `follow`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Url` header in case of a redirect.
 
 ### serialMode
 
@@ -205,8 +209,10 @@ $frujaxElement.on('always.frujax', function(event, context) {
     // null for successful requests
     context.errorThrown;
     context.jqXHR;
-    // Frujax-Redirect-Url response header or null if empty
-    context.redirectUrl;
+    // Frujax-Redirect-Location response header or null if empty
+    context.redirectLocation;
+    // Frujax-Redirect-Status-Code response header or null if empty
+    context.redirectStatusCode;
     context.textStatus;
     // Frujax-Title response header or null if empty
     context.title;
