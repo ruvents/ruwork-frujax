@@ -7,7 +7,6 @@
             dataType: 'html',
         },
         autoload: false,
-        clearBefore: null,
         filter: null,
         history: false,
         interceptRedirect: true,
@@ -111,8 +110,6 @@
                 ajaxOptions = base._resolveAjaxOptions(options),
                 index = base._jqXHRs.length;
 
-            base._clearBefore();
-
             $element.trigger('before.frujax', ajaxOptions);
 
             base._jqXHRs[index] = base._createJqXHR(ajaxOptions, ignoreForm)
@@ -183,15 +180,6 @@
                 base.request();
             });
         },
-        _clearBefore: function () {
-            if (null !== this._options.clearBefore) {
-                if (this._jQueryFormPluginExists()) {
-                    $(this._options.clearBefore).clearFields();
-                } else {
-                    console.warn('jQuery Form Plugin is required to clear fields. https://github.com/jquery-form/form');
-                }
-            }
-        },
         _createContext: function (ajaxOptions, jqXHR, textStatus, errorThrown, data) {
             var redirectStatusCode = jqXHR.getResponseHeader('Frujax-Redirect-Status-Code'),
                 $content = null;
@@ -224,7 +212,7 @@
             var $source = null === this._options.source ? this._$element : $(this._options.source);
 
             if (!ignoreForm && $source.is('form')) {
-                if (this._jQueryFormPluginExists()) {
+                if ('function' === typeof $.fn.ajaxSubmit) {
                     return $source.ajaxSubmit(options).data('jqxhr');
                 }
 
@@ -241,9 +229,6 @@
             }
 
             return false;
-        },
-        _jQueryFormPluginExists: function () {
-            return 'function' === typeof $.fn.ajaxSubmit;
         },
         _processRedirect: function (context) {
             var redirectMode = this._options.redirectMode;
