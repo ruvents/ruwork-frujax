@@ -7,6 +7,7 @@
             dataType: 'html',
         },
         autoload: false,
+        filter: null,
         history: false,
         interceptRedirect: true,
         on: function ($element) {
@@ -23,6 +24,7 @@
         preventDefault: true,
         redirectMode: 'follow',
         serialMode: 'async',
+        source: null,
         target: null,
         url: function ($element) {
             if ($element.is('a')) {
@@ -179,10 +181,19 @@
             });
         },
         _createContext: function (ajaxOptions, jqXHR, textStatus, errorThrown, data) {
-            var redirectStatusCode = jqXHR.getResponseHeader('Frujax-Redirect-Status-Code');
+            var redirectStatusCode = jqXHR.getResponseHeader('Frujax-Redirect-Status-Code'),
+                $content = null;
+
+            if (data) {
+                $content = $(data);
+
+                if (null !== this._options.filter) {
+                    $content = $(this._options.filter, $content);
+                }
+            }
 
             return {
-                $content: data ? $(data) : null,
+                $content: $content,
                 $target: null === this._options.target ? this._$element : $(this._options.target),
                 ajaxOptions: ajaxOptions,
                 errorThrown: errorThrown,
@@ -198,9 +209,11 @@
             };
         },
         _createJqXHR: function (options, ignoreForm) {
-            if (!ignoreForm && this._$element.is('form')) {
+            var $source = null === this._options.source ? this._$element : $(this._options.source);
+
+            if (!ignoreForm && $source.is('form')) {
                 if ('function' === typeof $.fn.ajaxSubmit) {
-                    return this._$element.ajaxSubmit(options).data('jqxhr');
+                    return $source.ajaxSubmit(options).data('jqxhr');
                 }
 
                 console.warn('jQuery Form Plugin is required to submit forms correctly. https://github.com/jquery-form/form');

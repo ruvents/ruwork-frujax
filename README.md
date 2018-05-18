@@ -54,6 +54,12 @@ Type: `bool`. Default: `false`.
 
 If `true`, request is performed immediately after initialization.
 
+### filter
+
+Type: `null|<selector>`. Default: `null`.
+
+If not `null`, the result will be filtered according to the selector. `context.$content` will contain the filtered result.
+
 ### history
 
 Type: `bool`. Default: `false`.
@@ -97,6 +103,12 @@ Strategies for handling sequential calls (when specified events trigger before t
 - `async`: let frujax make any number of parallel requests,
 - `force`: abort the pending request and make a new one,
 - `lock`: ignore new calls until the last one terminates.
+
+### source
+
+Type: `null|<selector>`. Default: `null`.
+
+If `null`, the current element is used. This option allows to set an element which will provide data for the request. Currently only forms are supported.
 
 ### target
 
