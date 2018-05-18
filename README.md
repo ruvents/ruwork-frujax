@@ -54,6 +54,12 @@ Type: `bool`. Default: `false`.
 
 If `true`, request is performed immediately after initialization.
 
+### clearBefore
+
+Type: `null|<selector>`. Default: `null`.
+
+If not `null`, specified fields will be cleared before request is performed.
+
 ### filter
 
 Type: `null|<selector>`. Default: `null`.
