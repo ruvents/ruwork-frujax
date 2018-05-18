@@ -261,12 +261,15 @@
         _resolveAjaxOptions: function (options) {
             var ajaxOptions = $.extend(
                 true,
-                {url: this._options.url},
+                {
+                    url: this._options.url,
+                    headers: {
+                        Frujax: 1,
+                    }
+                },
                 this._options.ajaxOptions,
                 options
             );
-
-            ajaxOptions.headers = $.extend({}, ajaxOptions.headers, {'Frujax': 1});
 
             if (this._options.interceptRedirect) {
                 ajaxOptions.headers['Frujax-Intercept-Redirect'] = 1;
