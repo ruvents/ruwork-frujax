@@ -5,9 +5,9 @@
         action: 'fill',
         ajaxOptions: {},
         autoload: false,
-        data: {},
+        data: undefined,
         filter: null,
-        headers: {},
+        headers: undefined,
         history: false,
         interceptRedirect: true,
         method: undefined,
@@ -27,7 +27,7 @@
         serialMode: 'async',
         source: null,
         target: null,
-        timeout: 0,
+        timeout: undefined,
         url: function ($element) {
             if ($element.is('a')) {
                 return $element.prop('href');
@@ -217,7 +217,12 @@
                 console.warn('jQuery Form Plugin is required to submit forms correctly. https://github.com/jquery-form/form');
             }
 
-            return $.ajax(options);
+            var data = $source
+                .find(':input')
+                .addBack(':input')
+                .serializeArray();
+
+            return $.ajax($.extend(true, {data: data}, options));
         },
         _hasActiveJqXHRs: function () {
             for (var i = 0; i < this._jqXHRs.length; i++) {
@@ -257,7 +262,7 @@
             window.history.pushState(null, title, url);
         },
         _resolveAjaxOptions: function (options) {
-            var ajaxOptions = $.extend(
+            return $.extend(
                 true,
                 {
                     data: this._options.data,
@@ -267,17 +272,15 @@
                     url: this._options.url,
                 },
                 this._options.ajaxOptions,
-                options
+                options,
+                {
+                    dataType: 'html',
+                    headers: {
+                        'Frujax': 1,
+                        'Frujax-Intercept-Redirect': this._options.interceptRedirect ? 1 : undefined
+                    }
+                }
             );
-
-            ajaxOptions.dataType = 'html';
-            ajaxOptions.headers.Frujax = 1;
-
-            if (this._options.interceptRedirect) {
-                ajaxOptions.headers['Frujax-Intercept-Redirect'] = 1;
-            }
-
-            return ajaxOptions;
         },
         _unbind: function () {
             this._$element.off('.frujax.internal');

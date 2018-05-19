@@ -126,7 +126,7 @@ Strategies for handling sequential calls (when specified events trigger before t
 
 Type: `null|<selector>`. Default: `null`.
 
-If `null`, the current element is used. This option allows to set an element which will provide data for the request. Currently only forms are supported.
+If `null`, the current element is used. This option allows to set an element which will provide data for the request. If source is a form, jQuery Form Plugin will be used. Otherwise all form controls within source will be serialized with [.serializeArray()](https://api.jquery.com/serializeArray/) and merged into data.
 
 ### target
 
