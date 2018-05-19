@@ -210,7 +210,7 @@
             var $source = null === this._options.source ? this._$element : $(this._options.source);
 
             if (!ignoreForm && $source.is('form')) {
-                if ('function' === typeof $.fn.ajaxSubmit) {
+                if (this._jQueryFormPluginExists()) {
                     return $source.ajaxSubmit(options).data('jqxhr');
                 }
 
@@ -232,6 +232,9 @@
             }
 
             return false;
+        },
+        _jQueryFormPluginExists: function () {
+            return 'function' === typeof $.fn.ajaxSubmit;
         },
         _processRedirect: function (context) {
             var redirectMode = this._options.redirectMode;
