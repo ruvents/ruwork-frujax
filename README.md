@@ -124,9 +124,11 @@ Strategies for handling sequential calls (when specified events trigger before t
 
 ### source
 
-Type: `null|<selector>`. Default: `null`.
+Type: `null|<selector>`. Default: frujax element.
 
-If `null`, the current element is used. This option allows to set an element which will provide data for the request. If source is a form, jQuery Form Plugin will be used. Otherwise all form controls within source will be serialized with [.serializeArray()](https://api.jquery.com/serializeArray/) and merged into data.
+This option allows to set a selector for elements which will provide data for the request. If source is a form element, jQuery Form Plugin will be used. Otherwise data from selected elements will be retrieved with [.serializeArray()](https://api.jquery.com/serializeArray/).
+
+Source data has lower priority. It will be recursively replaced by `data` option and data of the `ajaxOptions` argument of the `request` method.
 
 ### target
 
@@ -187,7 +189,7 @@ Aborts pending requests, removes all data and unbinds all internal events.
 $frujaxElement.frujax('destroy');
 ```
 
-### options
+### options(options)
 
 Getter and setter for element's options.
 
@@ -207,9 +209,9 @@ Note: `refresh` method must be called if `on` was changed.
 
 Aborts pending requests, rebinds internal events.
 
-### request
+### request(ajaxOptions)
 
-Performs an AJAX request with specified AJAX options (will be merged into the element's `ajaxOptions`).
+Performs an AJAX request with specified AJAX options. `ajaxOptions` will be merged into element's `ajaxOptions` only for this request.
 
 ```js
 $frujaxElement.frujax('request', {

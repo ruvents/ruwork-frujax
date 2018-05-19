@@ -25,7 +25,9 @@
         preventDefault: true,
         redirectMode: 'follow',
         serialMode: 'async',
-        source: null,
+        source: function ($element) {
+            return $element;
+        },
         target: null,
         timeout: undefined,
         url: function ($element) {
@@ -94,7 +96,7 @@
             this._unbind();
             this.init();
         },
-        request: function (options, ignoreForm) {
+        request: function (requestAjaxOptions, ignoreSource) {
             var base = this,
                 serialMode = base._options.serialMode;
 
@@ -105,12 +107,12 @@
             }
 
             var $element = base._$element,
-                ajaxOptions = base._resolveAjaxOptions(options),
+                ajaxOptions = base._resolveAjaxOptions(requestAjaxOptions || {}),
                 index = base._jqXHRs.length;
 
             $element.trigger('before.frujax', ajaxOptions);
 
-            base._jqXHRs[index] = base._createJqXHR(ajaxOptions, ignoreForm)
+            base._jqXHRs[index] = base._createJqXHR(ajaxOptions, ignoreSource)
                 .done(function (data, textStatus, jqXHR) {
                     base._jqXHRs[index] = null;
 
@@ -206,23 +208,22 @@
                 },
             };
         },
-        _createJqXHR: function (options, ignoreForm) {
-            var $source = null === this._options.source ? this._$element : $(this._options.source);
+        _createJqXHR: function (ajaxOptions, ignoreSource) {
+            if (ignoreSource || !this._options.source) {
+                return $.ajax(ajaxOptions);
+            }
 
-            if (!ignoreForm && $source.is('form')) {
+            var $source = $(this._options.source);
+
+            if ($source.is('form')) {
                 if (this._jQueryFormPluginExists()) {
-                    return $source.ajaxSubmit(options).data('jqxhr');
+                    return $source.ajaxSubmit(ajaxOptions).data('jqxhr');
                 }
 
                 console.warn('jQuery Form Plugin is required to submit forms correctly. https://github.com/jquery-form/form');
             }
 
-            var data = $source
-                .find(':input')
-                .addBack(':input')
-                .serializeArray();
-
-            return $.ajax($.extend(true, {data: data}, options));
+            return $.ajax($.extend(true, {data: $source.serializeArray()}, ajaxOptions));
         },
         _hasActiveJqXHRs: function () {
             for (var i = 0; i < this._jqXHRs.length; i++) {
@@ -241,12 +242,12 @@
 
             if ('follow' === redirectMode) {
                 var options = $.extend({}, context.ajaxOptions, {url: context.redirectLocation}),
-                    ignoreForm;
+                    ignoreSource;
 
                 if (307 === context.redirectStatusCode) {
-                    ignoreForm = false;
+                    ignoreSource = false;
                 } else {
-                    ignoreForm = true;
+                    ignoreSource = true;
                     $.extend(options, {
                         type: 'GET',
                         headers: {},
@@ -254,7 +255,7 @@
                     });
                 }
 
-                this.request(options, ignoreForm);
+                this.request(options, ignoreSource);
             } else if ('assign' === redirectMode) {
                 document.location.assign(context.redirectLocation);
             } else if ('replace' === redirectMode) {
@@ -264,7 +265,7 @@
         _pushHistoryState: function (title, url) {
             window.history.pushState(null, title, url);
         },
-        _resolveAjaxOptions: function (options) {
+        _resolveAjaxOptions: function (requestAjaxOptions) {
             return $.extend(
                 true,
                 {
@@ -275,9 +276,8 @@
                     url: this._options.url,
                 },
                 this._options.ajaxOptions,
-                options,
+                requestAjaxOptions,
                 {
-                    dataType: 'html',
                     headers: {
                         'Frujax': 1,
                         'Frujax-Intercept-Redirect': this._options.interceptRedirect ? 1 : undefined
