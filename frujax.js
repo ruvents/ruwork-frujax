@@ -5,12 +5,15 @@
         action: 'fill',
         ajaxOptions: {},
         autoload: false,
-        data: undefined,
+        // alias for ajaxOptions.data
+        data: {},
         filter: null,
-        headers: undefined,
+        // alias for ajaxOptions.headers
+        headers: {},
         history: false,
         interceptRedirect: true,
-        method: undefined,
+        // alias for ajaxOptions.type
+        method: null,
         on: function ($element) {
             if ($element.is('form')) {
                 return 'submit';
@@ -20,29 +23,31 @@
                 return 'click';
             }
 
+            if ($element.is(':input')) {
+                return 'change';
+            }
+
             return null;
         },
         preventDefault: true,
         redirectMode: 'follow',
         serialMode: 'async',
-        source: function ($element) {
-            return $element;
-        },
-        target: null,
-        timeout: undefined,
-        url: function ($element) {
-            if ($element.is('a')) {
-                return $element.prop('href');
-            }
-
-            return undefined;
-        },
+        source: 'self',
+        target: 'self',
+        // alias for ajaxOptions.timeout
+        timeout: 0,
+        // alias for ajaxOptions.url
+        url: null,
     };
 
     $.extend({
-        frujaxDefaults: function (options) {
+        frujaxDefaults: function (options, deep) {
             if (undefined !== options) {
-                $.extend(true, defaults, options);
+                if (deep) {
+                    $.extend(true, defaults, options);
+                } else {
+                    $.extend(defaults, options);
+                }
             }
 
             return defaults;
@@ -51,18 +56,12 @@
 
     function Frujax(element, options) {
         this._$element = $(element);
-        this._options = $.extend(true, {}, defaults, options);
+        this._options = {};
         this._jqXHRs = [];
 
-        var base = this;
-
-        $.each(this._options, function (key, value) {
-            if ('function' === typeof value) {
-                base._options[key] = value(base._$element);
-            }
-        });
-
-        base.init();
+        this.options(defaults);
+        this.options(options);
+        this.init();
     }
 
     $.extend(Frujax.prototype, {
@@ -84,9 +83,29 @@
                 this.request();
             }
         },
-        options: function (options) {
-            if (undefined !== options) {
-                $.extend(true, this._options, options);
+        options: function (options, deep) {
+            var $element = this._$element;
+
+            if (options) {
+                var newOptions = $.extend(true, {}, options);
+
+                $.each(newOptions, function (key, value) {
+                    if ('function' === typeof value) {
+                        value = value($element);
+                    }
+
+                    if ('self' === value) {
+                        value = $element;
+                    }
+
+                    newOptions[key] = value;
+                });
+
+                if (deep) {
+                    $.extend(true, this._options, newOptions);
+                } else {
+                    $.extend(this._options, newOptions);
+                }
             }
 
             return this._options;
@@ -107,12 +126,13 @@
             }
 
             var $element = base._$element,
-                ajaxOptions = base._resolveAjaxOptions(requestAjaxOptions || {}),
+                ajaxOptions = base._resolveAjaxOptions(requestAjaxOptions),
                 index = base._jqXHRs.length;
 
             $element.trigger('before.frujax', ajaxOptions);
 
-            base._jqXHRs[index] = base._createJqXHR(ajaxOptions, ignoreSource)
+            base._jqXHRs[index] = base
+                ._createJqXHR(ajaxOptions, ignoreSource)
                 .done(function (data, textStatus, jqXHR) {
                     base._jqXHRs[index] = null;
 
@@ -148,6 +168,10 @@
         _applyAction: function ($target, $content) {
             var action = this._options.action;
 
+            if (!$target || !action) {
+                return;
+            }
+
             if ('function' === typeof action) {
                 action($target, $content);
             } else if ('fill' === action) {
@@ -165,14 +189,16 @@
             }
         },
         _bind: function () {
-            if (null === this._options.on) {
+            var base = this,
+                on = base._options.on;
+
+            if (!on) {
                 return;
             }
 
-            var base = this,
-                events = (base._options.on + ' ').replace(/(\w) /g, '$1.frujax.internal ');
+            on = (on + ' ').replace(/(\w) /g, '$1.frujax.internal ');
 
-            base._$element.on(events, function (event) {
+            base._$element.on(on, function (event) {
                 if (base._options.preventDefault) {
                     event.preventDefault();
                 }
@@ -187,14 +213,14 @@
             if (data) {
                 $content = $(data);
 
-                if (null !== this._options.filter) {
+                if (this._options.filter) {
                     $content = $(this._options.filter, $content);
                 }
             }
 
             return {
                 $content: $content,
-                $target: null === this._options.target ? this._$element : $(this._options.target),
+                $target: this._options.target ? $(this._options.target) : null,
                 ajaxOptions: ajaxOptions,
                 errorThrown: errorThrown,
                 jqXHR: jqXHR,
@@ -223,7 +249,12 @@
                 console.warn('jQuery Form Plugin is required to submit forms correctly. https://github.com/jquery-form/form');
             }
 
-            return $.ajax($.extend(true, {data: $source.serializeArray()}, ajaxOptions));
+            return $.ajax($.extend(true, {}, ajaxOptions, {
+                data: $.merge(
+                    $source.serializeArray(),
+                    $.param(ajaxOptions.data)
+                )
+            }));
         },
         _hasActiveJqXHRs: function () {
             for (var i = 0; i < this._jqXHRs.length; i++) {
@@ -266,14 +297,24 @@
             window.history.pushState(null, title, url);
         },
         _resolveAjaxOptions: function (requestAjaxOptions) {
+            var type, url;
+
+            if (null !== this._options.method) {
+                type = this._options.method;
+            }
+
+            if (null !== this._options.url) {
+                url = this._options.url;
+            }
+
             return $.extend(
                 true,
                 {
                     data: this._options.data,
                     headers: this._options.headers,
                     timeout: this._options.timeout,
-                    type: this._options.method,
-                    url: this._options.url,
+                    type: type,
+                    url: url,
                 },
                 this._options.ajaxOptions,
                 requestAjaxOptions,

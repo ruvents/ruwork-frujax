@@ -31,7 +31,7 @@ Clicking the link will load the contents of the `/ajax` page into the `#containe
 
 ### action
 
-Type: `string`. Default: `fill`.
+Type: `null|string`. Default: `fill`.
 
 Actions to be applied to the target element:
 
@@ -58,19 +58,19 @@ If `true`, request is performed immediately after initialization.
 
 Type: `object`. Default: `{}`.
 
-Used as a default value for `ajaxOptions.data`.
+Alias for `ajaxOptions.data`.
 
 ### filter
 
 Type: `null|<selector>`. Default: `null`.
 
-If not `null`, the result will be filtered according to the selector. `context.$content` will contain the filtered result.
+If not empty, the result will be filtered according to the selector. `context.$content` will contain the filtered result.
 
 ### headers
 
 Type: `object`. Default: `{}`.
 
-Used as a default value for `ajaxOptions.headers`.
+Alias for `ajaxOptions.headers`.
 
 ### history
 
@@ -86,13 +86,13 @@ If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects 
 
 ### method
 
-Type: `string`. Default: `undefined`.
+Type: `null|string`. Default: `null`.
 
-Used as a default value for `ajaxOptions.type`.
+Alias for `ajaxOptions.type` (`ajaxOptions.method`). If `source` is a form and `method` is `null`, jQuery Form Plugin will use form's `method`.
 
 ### on
 
-Type: `string`. Default: `submit` for forms, `click` for links and buttons.
+Type: `string`. Default: `submit` for forms, `click` for links and buttons, `change` for form controls.
 
 Events that will trigger request (see the first argument of [.on()](http://api.jquery.com/on/)).
 
@@ -124,33 +124,33 @@ Strategies for handling sequential calls (when specified events trigger before t
 
 ### source
 
-Type: `null|<selector>`. Default: frujax element.
+Type: `null|self|<selector>`. Default: `self` (frujax element).
 
 This option allows to set a selector for elements which will provide data for the request. If source is a form element, jQuery Form Plugin will be used. Otherwise data from selected elements will be retrieved with [.serializeArray()](https://api.jquery.com/serializeArray/).
 
-Source data has lower priority. It will be recursively replaced by `data` option and data of the `ajaxOptions` argument of the `request` method.
-
 ### target
 
-Type: `null|<selector>`. Default: `null`.
+Type: `null|self|<selector>`. Default: `self` (frujax element).
 
-Element to apply action to. If `null`, the frujax element itself is a target.
+Element to apply action to.
 
 ### timeout
 
 Type: `int`. Default: `0`.
 
-Used as a default value for `ajaxOptions.timeout`.
+Alias for `ajaxOptions.timeout`.
 
 ### url
 
-Type: `string`. Default: `href` for `<a>` tags, `undefined` otherwise.
+Type: `null|string`. Default: `null`.
 
-Used as a default value for `ajaxOptions.url`.
+Alias for `ajaxOptions.url`. If `source` is a form and `url` is `null`, jQuery Form Plugin will use form's `action`.
 
 ## Global defaults
 
 To set a dynamic default value, use a callback with `$element` argument.
+
+To perform a deep merge of defaults, pass true as a second argument.
 
 ```js
 // getter
@@ -166,7 +166,7 @@ $.frujaxDefaults({
             return $element.prop('href');
         }
 
-        return undefined;
+        return null;
     },
 });
 ```
@@ -189,9 +189,11 @@ Aborts pending requests, removes all data and unbinds all internal events.
 $frujaxElement.frujax('destroy');
 ```
 
-### options(options)
+### options(options, deep)
 
 Getter and setter for element's options.
+
+To perform a deep merge of options, pass true as a second argument.
 
 ```js
 // get current element's options 
@@ -209,9 +211,11 @@ Note: `refresh` method must be called if `on` was changed.
 
 Aborts pending requests, rebinds internal events.
 
-### request(ajaxOptions)
+### request(ajaxOptions, ignoreSource)
 
-Performs an AJAX request with specified AJAX options. `ajaxOptions` will be merged into element's `ajaxOptions` only for this request.
+Performs an AJAX request with specified AJAX options. `ajaxOptions` will be deeply merged into element's `ajaxOptions` only for this request.
+
+Set `ignoreSource` to `true` to prevent form data submission or source elements serialization.
 
 ```js
 $frujaxElement.frujax('request', {
