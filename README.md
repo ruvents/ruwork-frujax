@@ -14,7 +14,8 @@ A JavaScript library to send and process AJAX requests with ease.
 ## Usage
 
 ```js
-$('a.frujax-link').frujax({
+$('.frujax-btn').frujax({
+    url: '/ajax',
     target: '#container'
 });
 ```
@@ -268,6 +269,7 @@ Fires if AJAX request succeeds.
 
 ```js
 $frujaxElement.on('success.frujax', function(event, context) {
+    // see always.frujax for context argument description
 });
 ```
 
@@ -277,6 +279,7 @@ Fires if AJAX request fails.
 
 ```js
 $frujaxElement.on('fail.frujax', function(event, context) {
+    // see always.frujax for context argument description
 });
 ```
 
@@ -286,5 +289,6 @@ Fires if a redirect was detected.
 
 ```js
 $frujaxElement.on('redirect.frujax', function(event, context) {
+    // see always.frujax for context argument description
 });
 ```
