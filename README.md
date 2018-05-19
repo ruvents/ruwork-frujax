@@ -151,7 +151,7 @@ Alias for `ajaxOptions.url`. If `source` is a form and `url` is `null`, jQuery F
 
 To set a dynamic default value, use a callback with `$element` argument.
 
-To perform a deep merge of defaults, pass true as a second argument.
+To perform a deep merge of defaults, pass `true` as a second argument.
 
 ```js
 // getter
@@ -194,7 +194,7 @@ $frujaxElement.frujax('destroy');
 
 Getter and setter for element's options.
 
-To perform a deep merge of options, pass true as a second argument.
+To perform a deep merge of options, pass `true` as a second argument.
 
 ```js
 // get current element's options 
