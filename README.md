@@ -22,7 +22,7 @@ $('a.frujax-link').frujax({
 Or you can use `data-frujax` attribute to quickly setup frujax on any element.
 
 ```html
-<a href="/ajax" data-frujax='{"target": "#container"}'>Link</a>
+<button data-frujax='{"url": "/ajax", "target": "#container"}'>Action!</button>
 ```
 
 Clicking the link will load the contents of the `/ajax` page into the `#container` element.
