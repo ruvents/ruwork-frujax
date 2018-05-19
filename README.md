@@ -44,7 +44,7 @@ Actions to be applied to the target element:
 
 ### ajaxOptions
 
-Type: `object`. Default: `{dataType: 'html'}`.
+Type: `object`. Default: `{}`.
 
 See [jQuery.ajax()](http://api.jquery.com/jquery.ajax/). Note: `ajaxOptions.url` overrides `url`.
 
@@ -54,11 +54,23 @@ Type: `bool`. Default: `false`.
 
 If `true`, request is performed immediately after initialization.
 
+### data
+
+Type: `object`. Default: `{}`.
+
+Used as a default value for `ajaxOptions.data`.
+
 ### filter
 
 Type: `null|<selector>`. Default: `null`.
 
 If not `null`, the result will be filtered according to the selector. `context.$content` will contain the filtered result.
+
+### headers
+
+Type: `object`. Default: `{}`.
+
+Used as a default value for `ajaxOptions.headers`.
 
 ### history
 
@@ -71,6 +83,12 @@ If `true`, requested url is pushed to the browser history.
 Type: `bool`. Default: `true`.
 
 If `true`, the plugin sends a `Frujax-Intercept-Redirect: 1` header and expects a `2xx` response with `Frujax-Redirect-Location` and `Frujax-Redirect-Status-Code` headers in case of a redirect.
+
+### method
+
+Type: `string`. Default: `undefined`.
+
+Used as a default value for `ajaxOptions.type`.
 
 ### on
 
@@ -116,11 +134,17 @@ Type: `null|<selector>`. Default: `null`.
 
 Element to apply action to. If `null`, the frujax element itself is a target.
 
+### timeout
+
+Type: `int`. Default: `0`.
+
+Used as a default value for `ajaxOptions.timeout`.
+
 ### url
 
-Type: `null|string`. Default: `href` for `<a>` tags, `action` for forms.
+Type: `string`. Default: `href` for `<a>` tags, `undefined` otherwise.
 
-Resource url. This option is introduced for simplicity of configuration. It is actually used as a default value for `ajaxOptions.url`.
+Used as a default value for `ajaxOptions.url`.
 
 ## Global defaults
 
@@ -133,16 +157,14 @@ var frujaxDefaults = $.frujaxDefaults();
 // setter
 $.frujaxDefaults({
     action: 'replace',
-    ajaxOptions: {
-        timeout: 1000,
-        method: 'post'
-    },
+    timeout: 1000,
+    method: 'post',
     url: function ($element) {
         if ($element.is('a')) {
             return $element.prop('href');
         }
 
-        return null;
+        return undefined;
     },
 });
 ```

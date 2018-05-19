@@ -3,13 +3,14 @@
 
     var defaults = {
         action: 'fill',
-        ajaxOptions: {
-            dataType: 'html',
-        },
+        ajaxOptions: {},
         autoload: false,
+        data: {},
         filter: null,
+        headers: {},
         history: false,
         interceptRedirect: true,
+        method: undefined,
         on: function ($element) {
             if ($element.is('form')) {
                 return 'submit';
@@ -26,16 +27,13 @@
         serialMode: 'async',
         source: null,
         target: null,
+        timeout: 0,
         url: function ($element) {
             if ($element.is('a')) {
                 return $element.prop('href');
             }
 
-            if ($element.is('form')) {
-                return $element.prop('action');
-            }
-
-            return null;
+            return undefined;
         },
     };
 
@@ -262,14 +260,18 @@
             var ajaxOptions = $.extend(
                 true,
                 {
+                    data: this._options.data,
+                    headers: this._options.headers,
+                    timeout: this._options.timeout,
+                    type: this._options.method,
                     url: this._options.url,
-                    headers: {
-                        Frujax: 1,
-                    }
                 },
                 this._options.ajaxOptions,
                 options
             );
+
+            ajaxOptions.dataType = 'html';
+            ajaxOptions.headers.Frujax = 1;
 
             if (this._options.interceptRedirect) {
                 ajaxOptions.headers['Frujax-Intercept-Redirect'] = 1;
