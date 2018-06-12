@@ -190,15 +190,28 @@
         },
         _bind: function () {
             var base = this,
-                on = base._options.on;
+                on = base._options.on,
+                $element = base._$element;
 
             if (!on) {
                 return;
             }
 
+            if (/\bsubmit\b/.test(on) && $element.is('form')) {
+                $element
+                    .find('input[type="submit"][name!=""][name], button[type="submit"][name!=""][name]')
+                    .click(function () {
+                        var $button = $(this),
+                            data = {};
+
+                        data[$button.prop('name')] = $button.prop('value');
+                        $element.data('frujaxClickedButtonData', data);
+                    });
+            }
+
             on = (on + ' ').replace(/(\w) /g, '$1.frujax.internal ');
 
-            base._$element.on(on, function (event) {
+            $element.on(on, function (event) {
                 if (base._options.preventDefault) {
                     event.preventDefault();
                 }
@@ -319,6 +332,7 @@
                 this._options.ajaxOptions,
                 requestAjaxOptions,
                 {
+                    data: this._$element.data('frujaxClickedButtonData') || {},
                     headers: {
                         'Frujax': 1,
                         'Frujax-Intercept-Redirect': this._options.interceptRedirect ? 1 : undefined
