@@ -40,6 +40,25 @@
         url: null,
     };
 
+    var autoloadQueue = [];
+
+    var autoloadBusy = false;
+
+    var autoloadFromQueue = function () {
+        if (autoloadBusy || 0 === autoloadQueue.length) {
+            return;
+        }
+
+        autoloadBusy = true;
+        autoloadQueue
+            .shift()
+            .one('always.frujax', function () {
+                autoloadBusy = false;
+                autoloadFromQueue();
+            })
+            .frujax('request');
+    };
+
     $.extend({
         frujaxDefaults: function (options, deep) {
             if (undefined !== options) {
@@ -51,7 +70,8 @@
             }
 
             return defaults;
-        }
+        },
+        frujaxUseAutoloadQueue: true,
     });
 
     function Frujax(element, options) {
@@ -80,7 +100,12 @@
             this._bind();
 
             if (this._options.autoload) {
-                this.request();
+                if ($.frujaxUseAutoloadQueue) {
+                    autoloadQueue.push(this._$element);
+                    setTimeout(autoloadFromQueue, 1);
+                } else {
+                    this.request();
+                }
             }
         },
         options: function (options, deep) {
