@@ -1,6 +1,6 @@
 {
     "name": "@ruwork/frujax",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "description": "A JavaScript library to send and process AJAX requests with ease.",
     "main": "frujax.js",
     "repository": "git@github.com:ruvents/ruwork-frujax.git",
