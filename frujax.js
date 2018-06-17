@@ -290,14 +290,17 @@
             action.call(this._$element, $target, $content);
         },
         _bind: function () {
-            var on = this._getOn();
+            var base = this,
+                $element = base._$element,
+                on = this._getOn();
+
+            $element.on('success.frujax' + INTERNAL_EVENT, function (event, request, response) {
+                initDataFrujaxElements(response.$content);
+            });
 
             if (!on) {
                 return;
             }
-
-            var base = this,
-                $element = base._$element;
 
             on = (on + ' ').replace(/\b /g, INTERNAL_EVENT + ' ');
 
@@ -307,10 +310,6 @@
                 }
 
                 base.request();
-            });
-
-            $element.on('success.frujax' + INTERNAL_EVENT, function (event, request, response) {
-                initDataFrujaxElements(response.$content);
             });
 
             $element
