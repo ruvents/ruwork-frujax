@@ -294,10 +294,6 @@
                 $element = base._$element,
                 on = this._getOn();
 
-            $element.on('success.frujax' + INTERNAL_EVENT, function (event, request, response) {
-                initDataFrujaxElements(response.$content);
-            });
-
             if (!on) {
                 return;
             }
@@ -465,6 +461,8 @@
             };
             xhr.addEventListener('load', function () {
                 var response = base._createResponse(xhr, 'success');
+
+                initDataFrujaxElements(response.$content);
 
                 if (null !== base._options.redirect && null !== response.redirectLocation) {
                     $element.trigger('redirect.frujax', [request, response]);
