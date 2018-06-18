@@ -6,8 +6,9 @@
      */
 
     var _SELF = '_self';
-    var NAMED_BUTTON = ':submit[name!=""][name]';
-    var INTERNAL_EVENT = '._frujax_internal';
+    var NAMED_BUTTONS_SELECTOR = ':submit[name!=""][name]';
+    var ENABLED_FILES_SELECTOR = 'input:file:enabled';
+    var INTERNAL_EVENT_CLASS = '._frujax_internal';
 
     /**
      * Serial autoload
@@ -227,6 +228,19 @@
                 sourceMethod,
                 sourceUrl;
 
+            $source
+                .find(ENABLED_FILES_SELECTOR)
+                .addBack(ENABLED_FILES_SELECTOR)
+                .each(function (index, element) {
+                    if (0 === element.files.length) {
+                        element.disabled = true;
+
+                        setTimeout(function () {
+                            element.disabled = false;
+                        }, 0);
+                    }
+                });
+
             if ($source.is('form')) {
                 sourceMethod = $source.prop('method');
                 sourceUrl = $source.prop('action');
@@ -298,7 +312,7 @@
                 return;
             }
 
-            on = (on + ' ').replace(/\b /g, INTERNAL_EVENT + ' ');
+            on = (on + ' ').replace(/\b /g, INTERNAL_EVENT_CLASS + ' ');
 
             $element.on(on, function (event) {
                 if (base._options.preventDefault) {
@@ -309,12 +323,12 @@
             });
 
             $element
-                .find(NAMED_BUTTON)
-                .addBack(NAMED_BUTTON)
-                .on('click' + INTERNAL_EVENT, function () {
+                .find(NAMED_BUTTONS_SELECTOR)
+                .addBack(NAMED_BUTTONS_SELECTOR)
+                .on('click' + INTERNAL_EVENT_CLASS, function () {
                     var $button = $(this);
 
-                    $element.one('before.frujax' + INTERNAL_EVENT, function (event, request) {
+                    $element.one('before.frujax' + INTERNAL_EVENT_CLASS, function (event, request) {
                         request.data[$button.prop('name')] = $button.prop('value');
                     });
                 });
@@ -330,8 +344,8 @@
                     formData.append(element.name, element.value);
                 });
                 $source
-                    .find('input:file')
-                    .addBack('input:file')
+                    .find(ENABLED_FILES_SELECTOR)
+                    .addBack(ENABLED_FILES_SELECTOR)
                     .each(function (index, element) {
                         formData.append(element.name, element.files[0]);
                     });
@@ -491,9 +505,9 @@
         },
         _unbind: function () {
             this._$element
-                .find(NAMED_BUTTON)
+                .find(NAMED_BUTTONS_SELECTOR)
                 .addBack()
-                .off(INTERNAL_EVENT);
+                .off(INTERNAL_EVENT_CLASS);
         },
         _xhrSetRequestHeaders: function (xhr, headers) {
             $.each(headers, function (name, value) {
