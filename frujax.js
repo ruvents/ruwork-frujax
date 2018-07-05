@@ -8,6 +8,7 @@
     var _SELF = '_self';
     var NAMED_BUTTONS_SELECTOR = ':submit[name!=""][name]';
     var ENABLED_FILES_SELECTOR = 'input:file:enabled';
+    var EVENT_CLASS = '.frujax';
     var INTERNAL_EVENT_CLASS = '._frujax_internal';
 
     /**
@@ -26,7 +27,7 @@
         autoloadBlocked = true;
         autoloadQueue
             .shift()
-            .one('finished.frujax', function () {
+            .one('finished' + EVENT_CLASS, function () {
                 autoloadBlocked = false;
                 autoloadNext();
             })
@@ -277,7 +278,7 @@
                 request.data || {}
             );
 
-            $element.trigger('before.frujax', [request]);
+            this.trigger('before', [request]);
 
             if ('GET' === request.method) {
                 var queryString = this._createQueryString($source, request.data);
@@ -328,7 +329,7 @@
                 .on('click' + INTERNAL_EVENT_CLASS, function () {
                     var $button = $(this);
 
-                    $element.one('before.frujax' + INTERNAL_EVENT_CLASS, function (event, request) {
+                    $element.one('before' + EVENT_CLASS + INTERNAL_EVENT_CLASS, function (event, request) {
                         request.data[$button.prop('name')] = $button.prop('value');
                     });
                 });
@@ -468,10 +469,10 @@
             xhr.timeout = base._options.timeout;
             base._xhrSetRequestHeaders(xhr, request.headers);
             xhr.addEventListener('abort', function () {
-                $element.trigger('abort.frujax', [request]);
+                base.trigger('abort', [request]);
             });
             xhr.ontimeout = function () {
-                $element.trigger('timeout.frujax', [request]);
+                base.trigger('timeout', [request]);
             };
             xhr.addEventListener('load', function () {
                 var response = base._createResponse(xhr, 'success');
@@ -479,11 +480,11 @@
                 initDataFrujaxElements(response.$content);
 
                 if (null !== base._options.redirect && null !== response.redirectLocation) {
-                    $element.trigger('redirect.frujax', [request, response]);
+                    base.trigger('redirect', [request, response]);
 
                     base._handleRedirect(request, response.redirectStatusCode, response.redirectLocation);
                 } else {
-                    $element.trigger('success.frujax', [request, response]);
+                    base.trigger('success', [request, response]);
 
                     base._applyAction(response.$target, response.$content);
                     base._pushHistoryState(response.title, response.url);
@@ -492,16 +493,19 @@
             xhr.addEventListener('error', function () {
                 var response = base._createResponse(xhr, 'error');
 
-                $element.trigger('error.frujax', [request, response]);
+                base.trigger('error', [request, response]);
             });
             xhr.addEventListener('loadend', function () {
-                $element.trigger('finished.frujax', [request]);
+                base.trigger('finished', [request]);
                 base._xhrs.splice(base._xhrs.indexOf(xhr), 1);
                 setTimeout(function () {
                     base._requestNext();
                 }, 0);
             });
             xhr.send(request.body);
+        },
+        _trigger: function(event, args) {
+            this._$element.trigger(event + EVENT_CLASS, args);
         },
         _unbind: function () {
             this._$element
