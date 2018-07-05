@@ -5,11 +5,10 @@
      * Constants
      */
 
-    var _SELF = '_self';
-    var NAMED_BUTTONS_SELECTOR = ':submit[name!=""][name]';
-    var ENABLED_FILES_SELECTOR = 'input:file:enabled';
-    var EVENT_CLASS = '.frujax';
-    var INTERNAL_EVENT_CLASS = '._frujax_internal';
+    var _SELF = '_self',
+        NAMED_BUTTONS_SELECTOR = ':submit[name!=""][name]',
+        EVENT_CLASS = '.frujax',
+        INTERNAL_EVENT_CLASS = '._frujax_internal';
 
     /**
      * Serial autoload
@@ -224,23 +223,9 @@
                 }
             }
 
-            var $element = this._$element,
-                $source = $(this._options.source),
+            var $source = $(this._options.source),
                 sourceMethod,
                 sourceUrl;
-
-            $source
-                .find(ENABLED_FILES_SELECTOR)
-                .addBack(ENABLED_FILES_SELECTOR)
-                .each(function (index, element) {
-                    if (0 === element.files.length) {
-                        element.disabled = true;
-
-                        setTimeout(function () {
-                            element.disabled = false;
-                        }, 0);
-                    }
-                });
 
             if ($source.is('form')) {
                 sourceMethod = $source.prop('method');
@@ -278,7 +263,7 @@
                 request.data || {}
             );
 
-            this.trigger('before', [request]);
+            this._trigger('before', [request]);
 
             if ('GET' === request.method) {
                 var queryString = this._createQueryString($source, request.data);
@@ -335,22 +320,40 @@
                 });
         },
         _createFormData: function ($source, data) {
-            var formData;
-
-            if ($source.is('form')) {
-                formData = new FormData($source.get(0));
-            } else {
+            var base = this,
                 formData = new FormData();
-                $source.serializeArray().forEach(function (element) {
-                    formData.append(element.name, element.value);
+
+            $source
+                .map(function () {
+                    var elements = $.prop(this, 'elements');
+                    return elements ? $.makeArray(elements) : this;
+                })
+                .filter(function () {
+                    var type = this.type;
+
+                    return this.name &&
+                        !$(this).is(':disabled') &&
+                        /^(?:input|select|textarea|keygen)$/i.test(this.nodeName) &&
+                        !/^(?:submit|button|image|reset)$/i.test(type) &&
+                        (this.checked || !/^(?:checkbox|radio)$/i.test(type));
+                })
+                .each(function () {
+                    var name = this.name;
+
+                    if ('file' === this.type) {
+                        $.each(this.files, function (i, file) {
+                            formData.append(name, file);
+                        });
+
+                        return;
+                    }
+
+                    var value = $(this).val();
+
+                    if (value != null) {
+                        formData.append(name, base._fixCRLF(value));
+                    }
                 });
-                $source
-                    .find(ENABLED_FILES_SELECTOR)
-                    .addBack(ENABLED_FILES_SELECTOR)
-                    .each(function (index, element) {
-                        formData.append(element.name, element.files[0]);
-                    });
-            }
 
             this._formDataAppendObject(formData, data);
 
@@ -380,6 +383,13 @@
                 title: xhr.getResponseHeader('Frujax-Title') || '',
                 url: xhr.getResponseHeader('Frujax-Url') || null,
             };
+        },
+        _fixCRLF: function (value) {
+            if (Array.isArray(value)) {
+                return value.map(this._fixCRLF);
+            }
+
+            return value.replace(/\r?\n/g, "\r\n");
         },
         _formDataAppendObject: function (FormData, data, name) {
             var base = this;
@@ -460,7 +470,6 @@
         },
         _send: function (request) {
             var base = this,
-                $element = base._$element,
                 xhr = new XMLHttpRequest();
 
             base._xhrs.push(xhr);
@@ -469,10 +478,10 @@
             xhr.timeout = base._options.timeout;
             base._xhrSetRequestHeaders(xhr, request.headers);
             xhr.addEventListener('abort', function () {
-                base.trigger('abort', [request]);
+                base._trigger('abort', [request]);
             });
             xhr.ontimeout = function () {
-                base.trigger('timeout', [request]);
+                base._trigger('timeout', [request]);
             };
             xhr.addEventListener('load', function () {
                 var response = base._createResponse(xhr, 'success');
@@ -480,11 +489,11 @@
                 initDataFrujaxElements(response.$content);
 
                 if (null !== base._options.redirect && null !== response.redirectLocation) {
-                    base.trigger('redirect', [request, response]);
+                    base._trigger('redirect', [request, response]);
 
                     base._handleRedirect(request, response.redirectStatusCode, response.redirectLocation);
                 } else {
-                    base.trigger('success', [request, response]);
+                    base._trigger('success', [request, response]);
 
                     base._applyAction(response.$target, response.$content);
                     base._pushHistoryState(response.title, response.url);
@@ -493,10 +502,10 @@
             xhr.addEventListener('error', function () {
                 var response = base._createResponse(xhr, 'error');
 
-                base.trigger('error', [request, response]);
+                base._trigger('error', [request, response]);
             });
             xhr.addEventListener('loadend', function () {
-                base.trigger('finished', [request]);
+                base._trigger('finished', [request]);
                 base._xhrs.splice(base._xhrs.indexOf(xhr), 1);
                 setTimeout(function () {
                     base._requestNext();
@@ -504,7 +513,7 @@
             });
             xhr.send(request.body);
         },
-        _trigger: function(event, args) {
+        _trigger: function (event, args) {
             this._$element.trigger(event + EVENT_CLASS, args);
         },
         _unbind: function () {
