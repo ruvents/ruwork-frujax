@@ -223,13 +223,15 @@
                 }
             }
 
-            var $source = $(this._options.source),
-                sourceMethod,
-                sourceUrl;
+            var sourceMethod, sourceUrl;
 
-            if ($source.is('form')) {
-                sourceMethod = $source.prop('method');
-                sourceUrl = $source.prop('action');
+            if (!request.$source) {
+                request.$source = $(this._options.source);
+            }
+
+            if (request.$source.is('form')) {
+                sourceMethod = request.$source.prop('method');
+                sourceUrl = request.$source.prop('action');
             }
 
             request.method = (
@@ -266,13 +268,13 @@
             this._trigger('before', [request]);
 
             if ('GET' === request.method) {
-                var queryString = this._createQueryString($source, request.data);
+                var queryString = this._createQueryString(request.$source, request.data);
 
                 if (queryString) {
                     request.url += (request.url.indexOf('?') < 0 ? '?' : '') + queryString;
                 }
             } else {
-                request.body = this._createFormData($source, request.data);
+                request.body = this._createFormData(request.$source, request.data);
             }
 
             this._requests.push(request);
