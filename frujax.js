@@ -1,18 +1,16 @@
-;(function (window, document, $, undefined) {
+;(function (window, document, $) {
     'use strict';
 
-    /**
-     * Constants
-     */
+    // Constants
 
-    var _SELF = '_self',
-        NAMED_BUTTONS_SELECTOR = ':submit[name!=""][name]',
-        EVENT_CLASS = '.frujax',
-        INTERNAL_EVENT_CLASS = '._frujax_internal';
+    var EVENT_CLASS = '.frujax',
+        INSTANCE_NAME = 'frujaxInstance',
+        INTERNAL_EVENT_CLASS = '._frujax_internal',
+        NAMED_BUTTON_SELECTOR = ':submit[name!=""][name]',
+        NON_INHERITED_OPTIONS = ['autoload', 'extend', 'on', 'preventDefault'],
+        SELECTOR_OPTIONS = ['target', 'with'];
 
-    /**
-     * Serial autoload
-     */
+    // Serial autoload
 
     var autoloadQueue = [];
 
@@ -26,16 +24,14 @@
         autoloadBlocked = true;
         autoloadQueue
             .shift()
-            .one('finished' + EVENT_CLASS, function () {
+            .one('loadend' + EVENT_CLASS + INTERNAL_EVENT_CLASS, function () {
                 autoloadBlocked = false;
                 autoloadNext();
             })
             .frujax('request');
     };
 
-    /**
-     * [data-frujax] elements initialization
-     */
+    // Initialization of [data-frujax] elements
 
     var initDataFrujaxElements = function (scope) {
         $(scope)
@@ -50,41 +46,52 @@
         initDataFrujaxElements(document);
     });
 
-    /**
-     * Plugin definition
-     */
+    // Helpers
+
+    var deepFreeze = function (object) {
+        Object.freeze(object);
+
+        Object.keys(object).forEach(function (property) {
+            var value = object[property],
+                type = typeof value;
+
+            if (('object' === type || 'function' === type) && !Object.isFrozen(value)) {
+                deepFreeze(value);
+            }
+        });
+    };
+
+    // Plugin definition
 
     $.fn.frujax = function (options) {
         var args = arguments;
 
-        if (undefined === options || 'object' === typeof options) {
+        if (!options || 'object' === typeof options) {
             return this.each(function () {
-                if (!($.data(this, 'frujaxInstance') instanceof Frujax)) {
-                    $.data(this, 'frujaxInstance', new Frujax(this, options));
+                if (!($.data(this, INSTANCE_NAME) instanceof Frujax)) {
+                    $.data(this, INSTANCE_NAME, new Frujax(this, options));
                 }
             });
-        } else if ('string' === typeof options && '_' !== options[0] && 'init' !== options) {
-            var returns;
+        } else if ('string' === typeof options && '_' !== options[0]) {
+            var result;
 
             this.each(function () {
-                var instance = $.data(this, 'frujaxInstance');
+                var instance = $.data(this, INSTANCE_NAME);
 
                 if (instance instanceof Frujax && 'function' === typeof instance[options]) {
-                    returns = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
+                    result = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
                 }
 
                 if ('destroy' === options) {
-                    $.data(this, 'frujaxInstance', null);
+                    $.data(this, INSTANCE_NAME, null);
                 }
             });
 
-            return undefined !== returns ? returns : this;
+            return 'undefined' === typeof (result) ? this : result;
         }
     };
 
-    /**
-     * Plugin globals
-     */
+    // Plugin globals
 
     $.fn.frujax.actions = {
         fill: function ($target, $content) {
@@ -114,17 +121,21 @@
         autoload: false,
         concurrent: null,
         data: {},
+        extend: null,
         filter: null,
         headers: {},
         history: false,
         method: null,
         on: null,
         preventDefault: true,
-        redirect: null,
-        source: _SELF,
-        target: _SELF,
+        target: '.',
         timeout: 0,
         url: null,
+        with: '.',
+    };
+
+    $.fn.frujax.is = function (element) {
+        return $(element).data(INSTANCE_NAME) instanceof Frujax;
     };
 
     $.fn.frujax.onGuessers = [
@@ -145,389 +156,373 @@
 
     $.fn.frujax.serialAutoload = true;
 
-    /**
-     * Library
-     */
+    // Library
 
     var Frujax = function (element, options) {
         this._$element = $(element);
-        this._options = {};
         this._xhrs = [];
         this._requests = [];
+        this._configure(options || {});
+        this._bind();
 
-        this.options($.fn.frujax.defaults);
-        this.options(options);
-        this.init();
+        if (this._options.autoload) {
+            if ($.fn.frujax.serialAutoload) {
+                autoloadQueue.push(this._$element);
+                setTimeout(autoloadNext, 0);
+            } else {
+                this.request();
+            }
+        }
     };
 
-    $.extend(Frujax.prototype, {
-        abort: function () {
-            this._requests = [];
-            this._xhrs.slice(0).forEach(function (xhr) {
-                xhr.abort();
-            });
-        },
-        destroy: function () {
-            this.abort();
-            this._unbind();
-        },
-        init: function () {
-            this._bind();
+    Frujax.prototype.abort = function () {
+        this._requests = [];
+        this._xhrs.slice(0).forEach(function (xhr) {
+            xhr.abort();
+        });
+    };
 
-            if (this._options.autoload) {
-                if ($.fn.frujax.serialAutoload) {
-                    autoloadQueue.push(this._$element);
-                    setTimeout(autoloadNext, 0);
-                } else {
-                    this.request();
-                }
-            }
-        },
-        options: function (options, deep) {
-            var $element = this._$element;
+    Frujax.prototype.destroy = function () {
+        this.abort();
+        this._unbind();
+    };
 
-            if ('object' === typeof options) {
-                var newOptions = $.extend(true, {}, options);
+    Frujax.prototype.options = function () {
+        return this._options;
+    };
 
-                $.each(newOptions, function (key, value) {
-                    if (_SELF === value) {
-                        value = $element;
-                    }
-
-                    newOptions[key] = value;
-                });
-
-                if (false === deep) {
-                    $.extend(this._options, newOptions);
-                } else {
-                    $.extend(true, this._options, newOptions);
-                }
-            }
-
-            return this._options;
-        },
-        refresh: function () {
-            this.destroy();
-            this.init();
-        },
-        request: function (request) {
-            request = request || {};
-
-            var concurrent = this._options.concurrent;
-
-            if (this._xhrs.length > 0) {
-                if ('propel' === concurrent) {
-                    this.abort();
-                } else if ('ignore' === concurrent) {
-                    return;
-                }
-            }
-
-            var sourceMethod, sourceUrl;
-
-            if (!request.$source) {
-                request.$source = $(this._options.source);
-            }
-
-            if (request.$source.is('form')) {
-                sourceMethod = request.$source.prop('method');
-                sourceUrl = request.$source.prop('action');
-            }
-
-            request.method = (
-                request.method ||
-                this._options.method ||
-                sourceMethod ||
-                'GET'
-            ).toUpperCase();
-
-            request.url = [
-                request.url,
-                this._options.url,
-                sourceUrl,
-                window.location.href || ''
-            ].find(function (url) {
-                return 'string' === typeof url;
-            });
-
-            request.headers = $.extend(true, {},
-                this._options.headers,
-                request.headers || {},
-                {
-                    'Frujax': 1,
-                    'Frujax-Intercept-Redirect': null === this._options.redirect ? undefined : 1,
-                    'X-Requested-With': 'XMLHttpRequest',
-                }
-            );
-
-            request.data = $.extend(true, {},
-                this._options.data,
-                request.data || {}
-            );
-
-            this._trigger('before', [request]);
-
-            if ('GET' === request.method) {
-                var queryString = this._createQueryString(request.$source, request.data);
-
-                if (queryString) {
-                    request.url += (request.url.indexOf('?') < 0 ? '?' : '') + queryString;
-                }
-            } else {
-                request.body = this._createFormData(request.$source, request.data);
-            }
-
-            this._requests.push(request);
-            this._requestNext();
-        },
-        _applyAction: function ($target, $content) {
-            var action = this._options.action;
-
-            if ('string' === typeof action && action in $.fn.frujax.actions) {
-                action = $.fn.frujax.actions[action];
-            } else if ('function' !== typeof action) {
+    Frujax.prototype.request = function () {
+        if (this._xhrs.length > 0) {
+            if ('propel' === this._options.concurrent) {
+                this.abort();
+            } else if ('ignore' === this._options.concurrent) {
                 return;
             }
+        }
 
-            action.call(this._$element, $target, $content);
-        },
-        _bind: function () {
-            var base = this,
-                $element = base._$element,
-                on = this._getOn();
+        var request = {
+            method: this._getMethod(),
+            url: this._getUrl(),
+            headers: this._getHeaders(),
+            data: this._getData(),
+            files: this._getFiles(),
+        };
 
-            if (!on) {
-                return;
+        this._trigger('request', [request]);
+        this._requests.push(request);
+        this._requestNext();
+    };
+
+    Frujax.prototype._applyAction = function ($target, $content) {
+        var action = this._options.action;
+
+        if ('string' === typeof action && action in $.fn.frujax.actions) {
+            action = $.fn.frujax.actions[action];
+        } else if ('function' !== typeof action) {
+            return;
+        }
+
+        action.call(this._$element, $target, $content);
+    };
+
+    Frujax.prototype._bind = function () {
+        var _this = this,
+            $element = this._$element,
+            on = this._getOn();
+
+        if (!on) {
+            return;
+        }
+
+        on = (on + ' ').replace(/\b /g, INTERNAL_EVENT_CLASS + ' ');
+
+        $element.on(on, function (event) {
+            if (_this._options.preventDefault) {
+                event.preventDefault();
             }
 
-            on = (on + ' ').replace(/\b /g, INTERNAL_EVENT_CLASS + ' ');
+            _this.request();
+        });
 
-            $element.on(on, function (event) {
-                if (base._options.preventDefault) {
-                    event.preventDefault();
-                }
+        $element
+            .find(NAMED_BUTTON_SELECTOR)
+            .addBack(NAMED_BUTTON_SELECTOR)
+            .on('click' + INTERNAL_EVENT_CLASS, function () {
+                var $button = $(this);
 
-                base.request();
-            });
+                $element.one('request' + EVENT_CLASS + INTERNAL_EVENT_CLASS, function (event, request) {
+                    var name = $button.prop('name');
 
-            $element
-                .find(NAMED_BUTTONS_SELECTOR)
-                .addBack(NAMED_BUTTONS_SELECTOR)
-                .on('click' + INTERNAL_EVENT_CLASS, function () {
-                    var $button = $(this);
-
-                    $element.one('before' + EVENT_CLASS + INTERNAL_EVENT_CLASS, function (event, request) {
-                        request.data[$button.prop('name')] = $button.prop('value');
-                    });
-                });
-        },
-        _createFormData: function ($source, data) {
-            var base = this,
-                formData = new FormData();
-
-            $source
-                .map(function () {
-                    var elements = $.prop(this, 'elements');
-                    return elements ? $.makeArray(elements) : this;
-                })
-                .filter(function () {
-                    var type = this.type;
-
-                    return this.name &&
-                        !$(this).is(':disabled') &&
-                        /^(?:input|select|textarea|keygen)$/i.test(this.nodeName) &&
-                        !/^(?:submit|button|image|reset)$/i.test(type) &&
-                        (this.checked || !/^(?:checkbox|radio)$/i.test(type));
-                })
-                .each(function () {
-                    var name = this.name;
-
-                    if ('file' === this.type) {
-                        $.each(this.files, function (i, file) {
-                            formData.append(name, file);
-                        });
-
-                        return;
-                    }
-
-                    var value = $(this).val();
-
-                    if (value != null) {
-                        formData.append(name, base._fixCRLF(value));
-                    }
-                });
-
-            this._formDataAppendObject(formData, data);
-
-            return formData;
-        },
-        _createQueryString: function ($source, data) {
-            var sourceString = $source.serialize(),
-                dataString = $.param(data);
-
-            return sourceString + (sourceString && dataString ? '&' : '') + dataString;
-        },
-        _createResponse: function (xhr, status) {
-            var redirectStatusCode = xhr.getResponseHeader('Frujax-Redirect-Status-Code'),
-                $content = $(xhr.responseText);
-
-            if (this._options.filter) {
-                $content = $(this._options.filter, $content);
-            }
-
-            return {
-                xhr: xhr,
-                status: status,
-                $content: $content,
-                $target: $(this._options.target),
-                redirectLocation: xhr.getResponseHeader('Frujax-Redirect-Location') || null,
-                redirectStatusCode: redirectStatusCode ? parseInt(redirectStatusCode) : null,
-                title: xhr.getResponseHeader('Frujax-Title') || '',
-                url: xhr.getResponseHeader('Frujax-Url') || null,
-            };
-        },
-        _fixCRLF: function (value) {
-            if (Array.isArray(value)) {
-                return value.map(this._fixCRLF);
-            }
-
-            return value.replace(/\r?\n/g, "\r\n");
-        },
-        _formDataAppendObject: function (FormData, data, name) {
-            var base = this;
-
-            if ('object' === typeof data) {
-                $.each(data, function (index, value) {
                     if (name) {
-                        base._formDataAppendObject(FormData, value, name + '[' + index + ']');
-                    } else {
-                        base._formDataAppendObject(FormData, value, index);
+                        request.data.push({name: name, value: $button.prop('value')});
                     }
                 });
-            } else {
-                FormData.append(name, data);
-            }
-        },
-        _getOn: function () {
-            if (this._options.on) {
-                return this._options.on;
-            }
-
-            var on;
-
-            for (var i = 0; i < $.fn.frujax.onGuessers.length; i++) {
-                on = $.fn.frujax.onGuessers[i].call(this._$element);
-
-                if (on) {
-                    return on;
-                }
-            }
-
-            return null;
-        },
-        _handleRedirect: function (request, redirectStatusCode, redirectLocation) {
-            var redirect = this._options.redirect;
-
-            if ('request' === redirect) {
-                if (301 === redirectStatusCode ||
-                    302 === redirectStatusCode ||
-                    303 === redirectStatusCode
-                ) {
-                    request.method = 'GET';
-                    request.url = redirectLocation;
-                    request.body = null;
-                    this._send(request);
-                } else if (
-                    307 === redirectStatusCode ||
-                    308 === redirectStatusCode
-                ) {
-                    request.url = redirectLocation;
-                    this._requests.unshift(request);
-                    this._requestNext();
-                }
-            } else if ('assign' === redirect) {
-                document.location.assign(redirectLocation);
-            } else if ('replace' === redirect) {
-                document.location.replace(redirectLocation);
-            }
-        },
-        _pushHistoryState: function (title, url) {
-            if (!this._options.history) {
-                return;
-            }
-
-            window.history.pushState(null, title, url);
-        },
-        _requestNext: function () {
-            if (0 === this._requests.length) {
-                return;
-            }
-
-            if ('defer' === this._options.concurrent && this._xhrs.length > 0) {
-                return;
-            }
-
-            this._send(this._requests.shift());
-            this._requestNext();
-        },
-        _send: function (request) {
-            var base = this,
-                xhr = new XMLHttpRequest();
-
-            base._xhrs.push(xhr);
-
-            xhr.open(request.method, request.url);
-            xhr.timeout = base._options.timeout;
-            base._xhrSetRequestHeaders(xhr, request.headers);
-            xhr.addEventListener('abort', function () {
-                base._trigger('abort', [request]);
             });
-            xhr.ontimeout = function () {
-                base._trigger('timeout', [request]);
+    };
+
+    Frujax.prototype._configure = function (options) {
+        var _this = this,
+            $parent = this._createSelector(options.extend)().first(),
+            parentOptions = {};
+
+        if ($parent.length > 0 && $.fn.frujax.is($parent)) {
+            var allParentOptions = $parent.frujax('options');
+
+            Object.keys(allParentOptions).forEach(function (name) {
+                if (NON_INHERITED_OPTIONS.indexOf(name) < 0) {
+                    parentOptions[name] = allParentOptions[name];
+                }
+            });
+        }
+
+        this._options = $.extend(true, {}, $.fn.frujax.defaults, parentOptions, options);
+
+        SELECTOR_OPTIONS.forEach(function (name) {
+            _this._options[name] = _this._createSelector(_this._options[name]);
+        });
+
+        this._trigger('options', [this._options]);
+
+        deepFreeze(this._options);
+    };
+
+    Frujax.prototype._createSelector = function (selector) {
+        if ('function' === typeof selector) {
+            return selector;
+        }
+
+        if (!selector) {
+            return function () {
+                return $([]);
             };
-            xhr.addEventListener('load', function () {
-                var response = base._createResponse(xhr, 'success');
+        }
 
-                initDataFrujaxElements(response.$content);
+        var _this = this;
 
-                if (null !== base._options.redirect && null !== response.redirectLocation) {
-                    base._trigger('redirect', [request, response]);
+        if ('.' === selector) {
+            return function () {
+                return _this._$element;
+            };
+        }
 
-                    base._handleRedirect(request, response.redirectStatusCode, response.redirectLocation);
+        var matches = selector.match(/^(\w+)\((.*)\)$/);
+
+        if (null === matches) {
+            return function () {
+                return $(selector);
+            };
+        }
+
+        return function () {
+            return _this._$element[matches[1]](matches[2]);
+        };
+    };
+
+    Frujax.prototype._getData = function () {
+        var data = [],
+            $with = this._options.with();
+
+        this._objectDataToArrayData(data, this._options.data);
+
+        return data.concat($with.serializeArray());
+    };
+
+    Frujax.prototype._getFiles = function () {
+        return this._options
+            .with()
+            .map(function () {
+                var elements = $.prop(this, 'elements');
+                return elements ? $.makeArray(elements) : this;
+            })
+            .filter(':file[name!=""][name]')
+            .map(function (i, element) {
+                return jQuery.map(this.files, function (file) {
+                    return {name: element.name, value: file};
+                });
+            })
+            .get();
+    };
+
+    Frujax.prototype._getHeaders = function () {
+        return $.extend(true, {}, this._options.headers, {
+            'Frujax': 1,
+            'X-Requested-With': 'XMLHttpRequest',
+        });
+    };
+
+    Frujax.prototype._getMethod = function () {
+        return (this._options.method || this._$element.prop('method') || 'GET').toUpperCase();
+    };
+
+    Frujax.prototype._getOn = function () {
+        if (this._options.on) {
+            return this._options.on;
+        }
+
+        var on;
+
+        for (var i = 0; i < $.fn.frujax.onGuessers.length; i++) {
+            on = $.fn.frujax.onGuessers[i].call(this._$element);
+
+            if (on) {
+                return on;
+            }
+        }
+
+        return null;
+    };
+
+    Frujax.prototype._getUrl = function () {
+        if ('string' === typeof this._options.url) {
+            return this._options.url;
+        }
+
+        if ('string' === typeof this._$element.prop('action')) {
+            return this._$element.prop('action');
+        }
+
+        if ('string' === typeof this._$element.prop('href')) {
+            return this._$element.prop('href');
+        }
+
+        return window.location.href || '';
+    };
+
+    Frujax.prototype._objectDataToArrayData = function (arrayData, objectData, name) {
+        if ('object' === typeof objectData) {
+            var _this = this;
+
+            Object.keys(objectData).forEach(function (key) {
+                if (name) {
+                    _this._objectDataToArrayData(arrayData, objectData[key], name + '[' + key + ']');
                 } else {
-                    base._trigger('success', [request, response]);
-
-                    base._applyAction(response.$target, response.$content);
-                    base._pushHistoryState(response.title, response.url);
+                    _this._objectDataToArrayData(arrayData, objectData[key], key);
                 }
             });
-            xhr.addEventListener('error', function () {
-                var response = base._createResponse(xhr, 'error');
+        } else {
+            arrayData.push({name: name, value: objectData});
+        }
+    };
 
-                base._trigger('error', [request, response]);
-            });
-            xhr.addEventListener('loadend', function () {
-                base._trigger('finished', [request]);
-                base._xhrs.splice(base._xhrs.indexOf(xhr), 1);
-                setTimeout(function () {
-                    base._requestNext();
-                }, 0);
-            });
-            xhr.send(request.body);
-        },
-        _trigger: function (event, args) {
-            this._$element.trigger(event + EVENT_CLASS, args);
-        },
-        _unbind: function () {
-            this._$element
-                .find(NAMED_BUTTONS_SELECTOR)
-                .addBack()
-                .off(INTERNAL_EVENT_CLASS);
-        },
-        _xhrSetRequestHeaders: function (xhr, headers) {
-            $.each(headers, function (name, value) {
-                xhr.setRequestHeader(name, value);
-            });
-        },
-    });
+    Frujax.prototype._requestNext = function () {
+        if (0 === this._requests.length) {
+            return;
+        }
+
+        if ('defer' === this._options.concurrent && this._xhrs.length > 0) {
+            return;
+        }
+
+        this._sendRequest(this._requests.shift());
+        this._requestNext();
+    };
+
+    Frujax.prototype._sendRequest = function (request) {
+        var _this = this,
+            xhr = new XMLHttpRequest(),
+            url = request.url,
+            body = null;
+
+        this._trigger('presend', [request, xhr]);
+
+        if ('GET' === request.method) {
+            var query = $.param(request.data);
+
+            if (query) {
+                url += (url.indexOf('?') < 0 ? '?' : '&') + query;
+            }
+        } else {
+            body = new FormData();
+
+            request.data
+                .concat(request.files)
+                .forEach(function (item) {
+                    body.append(item.name, item.value);
+                });
+        }
+
+        xhr.open(request.method, url);
+
+        Object.keys(request.headers).forEach(function (name) {
+            xhr.setRequestHeader(name, request.headers[name]);
+        });
+
+        xhr.timeout = this._options.timeout;
+
+        xhr.onloadstart = function (event) {
+            _this._trigger('loadstart', [event, xhr]);
+        };
+
+        xhr.onloadprogress = function (event) {
+            _this._trigger('loadprogress', [event, xhr]);
+        };
+
+        xhr.onabort = function (event) {
+            _this._trigger('abort', [event, xhr]);
+        };
+
+        xhr.onerror = function (event) {
+            _this._trigger('error', [event, xhr]);
+        };
+
+        xhr.onload = function (event) {
+            _this._trigger('load', [event, xhr]);
+
+            if (xhr.status >= 400) {
+                _this._trigger('failure', [xhr]);
+                return;
+            }
+
+            if (xhr.status < 200 || xhr.status >= 300) {
+                console.warn('Unexpected status code: ' + xhr.status + '.');
+                return;
+            }
+
+            var $content = $(xhr.responseText),
+                $target = _this._options.target();
+
+            if (_this._options.filter && !$content.is(_this._options.filter)) {
+                $content = $content.find(_this._options.filter).first();
+            }
+
+            _this._trigger('success', [xhr, $content, $target]);
+            _this._applyAction($target, $content);
+            initDataFrujaxElements($content);
+
+            if (_this._options.history) {
+                window.history.pushState(
+                    null,
+                    xhr.getResponseHeader('Frujax-Title') || '',
+                    xhr.getResponseHeader('Frujax-Url') || null
+                );
+            }
+        };
+
+        xhr.ontimeout = function (event) {
+            _this._trigger('timeout', [event, xhr]);
+        };
+
+        xhr.onloadend = function (event) {
+            _this._trigger('loadend', [event, xhr]);
+            _this._xhrs.splice(_this._xhrs.indexOf(xhr), 1);
+            setTimeout(function () {
+                _this._requestNext();
+            }, 0);
+        };
+
+        xhr.send(body);
+
+        this._xhrs.push(xhr);
+    };
+
+    Frujax.prototype._trigger = function (event, args) {
+        this._$element.trigger(event + EVENT_CLASS, args);
+    };
+
+    Frujax.prototype._unbind = function () {
+        this._$element
+            .find(NAMED_BUTTON_SELECTOR)
+            .addBack()
+            .off(INTERNAL_EVENT_CLASS);
+    };
 })(window, document, jQuery);
