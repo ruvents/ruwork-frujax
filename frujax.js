@@ -274,7 +274,7 @@
                 sourceUrl,
                 window.location.href || ''
             ].find(function (url) {
-                return 'string' === typeof url;
+                return 'string' === typeof url && '' !== url;
             });
 
             request.headers = $.extend(true, {},
