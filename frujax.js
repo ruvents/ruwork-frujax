@@ -298,7 +298,13 @@
                 var queryString = this._createQueryString(request.$source, request.data);
 
                 if (queryString) {
-                    request.url += (request.url.indexOf('?') < 0 ? '?' : '') + queryString;
+                    if (request.url.indexOf('?') < 0) {
+                        request.url += '?';
+                    } else if ('&' !== request.url.slice(-1)) {
+                        request.url += '&';
+                    }
+
+                    request.url += queryString;
                 }
             } else {
                 request.body = this._createFormData(request.$source, request.data);
