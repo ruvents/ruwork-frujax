@@ -528,16 +528,21 @@
 
                     base._handleRedirect(request, response.redirectStatusCode, response.redirectLocation);
                 } else {
+                    if (xhr.status >= 400) {
+                        base._trigger('error', [request, response]);
+                        return;
+                    }
+
+                    if (xhr.status < 200 || xhr.status >= 300) {
+                        console.warn('Unexpected status code: ' + xhr.status + '.');
+                        return;
+                    }
+
                     base._trigger('success', [request, response]);
 
                     base._applyAction(response.$target, response.$content);
                     base._pushHistoryState(response.title, response.url);
                 }
-            });
-            xhr.addEventListener('error', function () {
-                var response = base._createResponse(xhr, 'error');
-
-                base._trigger('error', [request, response]);
             });
             xhr.addEventListener('loadend', function () {
                 base._trigger('finished', [request]);
