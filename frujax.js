@@ -433,7 +433,13 @@
             var query = $.param(request.data);
 
             if (query) {
-                url += (url.indexOf('?') < 0 ? '?' : '&') + query;
+                if (url.indexOf('?') < 0) {
+                    url += '?';
+                } else if ('&' !== url.slice(-1)) {
+                    url += '&';
+                }
+
+                url += query;
             }
         } else {
             body = new FormData();
