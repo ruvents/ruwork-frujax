@@ -373,16 +373,20 @@
     };
 
     Frujax.prototype._getUrl = function () {
-        if ('string' === typeof this._options.url) {
+        if ('string' === typeof this._options.url && '' !== this._options.url) {
             return this._options.url;
         }
 
-        if ('string' === typeof this._$element.prop('action')) {
-            return this._$element.prop('action');
+        var action = this._$element.prop('action');
+
+        if ('string' === typeof action && '' !== action) {
+            return action;
         }
 
-        if ('string' === typeof this._$element.prop('href')) {
-            return this._$element.prop('href');
+        var href = this._$element.prop('href');
+
+        if ('string' === typeof href && '' !== href) {
+            return href;
         }
 
         return window.location.href || '';
